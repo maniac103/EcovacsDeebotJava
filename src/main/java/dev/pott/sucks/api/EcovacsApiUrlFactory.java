@@ -15,11 +15,12 @@ public final class EcovacsApiUrlFactory {
     private static final String MAIN_URL_CHECK_APP_VERSION_PATH = "/common/checkVersion";
     private static final String MAIN_URL_AUTH_CODE_PATH = "/user/getAuthCode";
 
-    private static final String USER_URL_FORMAT = "https://users-{continent}.ecouser.net:8000/user.do";
-
     private static final String PORTAL_URL_FORMAT = "https://portal-{continent}.ecouser.net/api";
     private static final String PORTAL_URL_FORMAT_CN = "https://portal.ecouser.net/api/";
+    private static final String PORTAL_USERS_PATH = "/users/user.do";
+
     private static final String PORTAL_GLOBAL_AUTH_CODE = "https://gl-{country}-openapi.ecovacs.com/v1/global/auth/getAuthCode";
+
 
     private static final String COUNTRY_PLACEHOLDER = "{country}";
     private static final String LANGUAGE_PLACEHOLDER = "{lang}";
@@ -46,6 +47,16 @@ public final class EcovacsApiUrlFactory {
         HashMap<String, String> placeholder = new HashMap<>();
         placeholder.put(COUNTRY_PLACEHOLDER, country);
         return StringPlaceholderUtils.replacePlaceHolders(PORTAL_GLOBAL_AUTH_CODE, placeholder);
+    }
+
+    public static String getUserUrl(String continent) {
+        return getPortalUrl(continent) + PORTAL_USERS_PATH;
+    }
+
+    private static String getPortalUrl(String continent) {
+        HashMap<String, String> placeholder = new HashMap<>();
+        placeholder.put(CONTINENT_PLACEHOLDER, continent);
+        return StringPlaceholderUtils.replacePlaceHolders(PORTAL_URL_FORMAT, placeholder);
     }
 
     private static String getMainUrl(

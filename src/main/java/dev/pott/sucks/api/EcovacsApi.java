@@ -3,6 +3,7 @@ package dev.pott.sucks.api;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.pott.sucks.api.dto.AuthCodeResponse;
+import dev.pott.sucks.api.dto.LoginAcknowledgementResponse;
 import dev.pott.sucks.api.dto.LoginResponse;
 import dev.pott.sucks.api.dto.ResponseWrapper;
 import dev.pott.sucks.util.MD5Util;
@@ -15,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class EcovacsApi {
@@ -108,9 +110,9 @@ public final class EcovacsApi {
             authCodeParameters.put("deviceId", configuration.getDeviceId());
             HashMap<String, String> signedRequestParameters = getSignedAuthCodeRequestParameters(authCodeParameters);
 
-            String loginUrl = EcovacsApiUrlFactory.getAuthCodeUrl(configuration.getCountry());
+            String authCodeUrl = EcovacsApiUrlFactory.getAuthCodeUrl(configuration.getCountry());
 
-            Request authCodeRequest = httpClient.newRequest(loginUrl);
+            Request authCodeRequest = httpClient.newRequest(authCodeUrl);
             signedRequestParameters.forEach(authCodeRequest::param);
             ContentResponse authCodeResponse = authCodeRequest.send();
 
@@ -124,6 +126,49 @@ public final class EcovacsApi {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
+        }
+    }
+
+    public LoginAcknowledgementResponse acknowledgeLogin(AuthCodeResponse authCodeResponse, LoginResponse loginResponse) {
+        try {
+            httpClient.start();
+            HashMap<String, String> acknowledgementParameters = new HashMap<>();
+            acknowledgementParameters.put("edition","ECOGLOBLE");
+            acknowledgementParameters.put("userId",loginResponse.getUid());
+            acknowledgementParameters.put("token",authCodeResponse.getAuthCode());
+            acknowledgementParameters.put("realm","ecouser.net");
+            acknowledgementParameters.put("resource", configuration.getDeviceId().substring(0,8));
+            acknowledgementParameters.put("org","ECOWW");
+            acknowledgementParameters.put("last","");
+            acknowledgementParameters.put("country",configuration.getCountry());
+            acknowledgementParameters.put("todo", "loginByItToken");
+
+            String userUrl = EcovacsApiUrlFactory.getUserUrl(configuration.getContinent());
+
+            Request authCodeRequest = httpClient.newRequest(userUrl);
+            acknowledgementParameters.forEach(authCodeRequest::param);
+            ContentResponse acknowledgementResponse = authCodeRequest.send();
+
+            httpClient.stop();
+
+            if (acknowledgementResponse.getStatus() == HttpStatus.OK_200) {
+                return getLoginAcknowledgementResponse(acknowledgementResponse);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private LoginAcknowledgementResponse getLoginAcknowledgementResponse(ContentResponse acknowledgementResponse) {
+        String content = acknowledgementResponse.getContentAsString();
+        LoginAcknowledgementResponse response = gson.fromJson(content, LoginAcknowledgementResponse.class);
+        if(Objects.equals(response.getResult(), "ok")) {
+            return response;
+        } else {
             return null;
         }
     }

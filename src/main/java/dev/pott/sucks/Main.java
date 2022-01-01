@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.dto.AuthCodeResponse;
+import dev.pott.sucks.api.dto.LoginAcknowledgementResponse;
 import dev.pott.sucks.api.dto.LoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
@@ -31,8 +32,9 @@ public class Main {
                         "DE"
                 )
         );
-        LoginResponse response = api.login();
-        AuthCodeResponse authCodeResponse = api.getAuthCode(response);
+        LoginResponse loginResponse = api.login();
+        AuthCodeResponse authCodeResponse = api.getAuthCode(loginResponse);
+        LoginAcknowledgementResponse acknowledgementResponse = api.acknowledgeLogin(authCodeResponse, loginResponse);
         System.out.println(authCodeResponse);
     }
 }
