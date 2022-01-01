@@ -46,21 +46,18 @@ public final class EcovacsApi {
     /**
      * Login at Ecovacs API
      *
-     * @return true when login was successful
+     * @return LoginResponse or null if something went wrong
      */
     public LoginResponse login() {
         try {
             httpClient.start();
 
             // Generate login Params
-            HashMap<String, String> params = new HashMap<>();
-            params.put("account", configuration.getUsername());
-            params.put("password", MD5Util.getMD5Hash(configuration.getPassword()));
-            HashMap<String, String> signedParams = getSignedParams(params);
+            HashMap<String, String> loginParameters = new HashMap<>();
+            loginParameters.put("account", configuration.getUsername());
+            loginParameters.put("password", MD5Util.getMD5Hash(configuration.getPassword()));
+            HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
 
-            // SIGNING
-
-            // Request
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
                     configuration.getCountry(),
                     "EN",
@@ -72,7 +69,7 @@ public final class EcovacsApi {
             );
 
             Request loginRequest = httpClient.newRequest(loginUrl);
-            signedParams.forEach(loginRequest::param);
+            signedRequestParameters.forEach(loginRequest::param);
             ContentResponse loginResponse = loginRequest.send();
 
             httpClient.stop();
@@ -100,15 +97,15 @@ public final class EcovacsApi {
         }
     }
 
-    private HashMap<String, String> getSignedParams(Map<String, String> params) {
-        HashMap<String, String> signedParams = new HashMap<>();
-        signedParams.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
-        signedParams.put("authTimespan", String.valueOf(System.currentTimeMillis()));
-        signedParams.put("authTimeZone", "GMT-8");
-        signedParams.putAll(params);
+    private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
+        HashMap<String, String> signedRequestParameters = new HashMap<>();
+        signedRequestParameters.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
+        signedRequestParameters.put("authTimespan", String.valueOf(System.currentTimeMillis()));
+        signedRequestParameters.put("authTimeZone", "GMT-8");
+        signedRequestParameters.putAll(requestSpecificParameters);
 
         HashMap<String, String> signOn = new HashMap<>(meta);
-        signOn.putAll(signedParams);
+        signOn.putAll(signedRequestParameters);
         StringBuilder signOnText = new StringBuilder(CLIENT_KEY);
 
         List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
@@ -117,9 +114,9 @@ public final class EcovacsApi {
         }
         signOnText.append(SECRET);
 
-        signedParams.put("authAppkey", CLIENT_KEY);
-        signedParams.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
-        return signedParams;
+        signedRequestParameters.put("authAppkey", CLIENT_KEY);
+        signedRequestParameters.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+        return signedRequestParameters;
     }
 
 }
