@@ -12,12 +12,14 @@ public final class EcovacsApiUrlFactory {
 
     private static final String MAIN_URL_FORMAT = "https://gl-{country}-api.ecovacs.com/v1/private/{country}/{lang}/{deviceId}/{appCode}/{appVersion}/{channel}/{deviceType}";
     private static final String MAIN_URL_LOGIN_PATH = "/user/login";
+    private static final String MAIN_URL_CHECK_APP_VERSION_PATH = "/common/checkVersion";
+    private static final String MAIN_URL_AUTH_CODE_PATH = "/user/getAuthCode";
 
     private static final String USER_URL_FORMAT = "https://users-{continent}.ecouser.net:8000/user.do";
 
     private static final String PORTAL_URL_FORMAT = "https://portal-{continent}.ecouser.net/api";
     private static final String PORTAL_URL_FORMAT_CN = "https://portal.ecouser.net/api/";
-    private static final String PORTAL_GLOBAL_AUTHCODE = "https://gl-{country}-openapi.ecovacs.com/v1/global/auth/getAuthCode";
+    private static final String PORTAL_GLOBAL_AUTH_CODE = "https://gl-{country}-openapi.ecovacs.com/v1/global/auth/getAuthCode";
 
     private static final String COUNTRY_PLACEHOLDER = "{country}";
     private static final String LANGUAGE_PLACEHOLDER = "{lang}";
@@ -38,6 +40,18 @@ public final class EcovacsApiUrlFactory {
             String deviceType
     ) {
         return getMainUrl(country, language, deviceId, appCode, appVersion, channel, deviceType) + MAIN_URL_LOGIN_PATH;
+    }
+
+    public static String getAuthCodeUrl(
+            String country,
+            String language,
+            String deviceId,
+            String appCode,
+            String appVersion,
+            String channel,
+            String deviceType
+    ) {
+        return getMainUrl(country, language, deviceId, appCode, appVersion, channel, deviceType) + MAIN_URL_AUTH_CODE_PATH;
     }
 
     private static String getMainUrl(

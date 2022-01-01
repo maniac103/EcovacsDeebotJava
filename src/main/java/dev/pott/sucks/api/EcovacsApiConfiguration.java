@@ -1,5 +1,7 @@
 package dev.pott.sucks.api;
 
+import org.eclipse.jetty.util.StringUtil;
+
 public final class EcovacsApiConfiguration {
     private final String deviceId;
     private final String username;

@@ -5,13 +5,21 @@ import dev.pott.sucks.api.dto.LoginRequest;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public final class EcovacsApi {
 
     private static final String CLIENT_KEY = "1520391301804";
     private static final String SECRET = "6c319b2a5cd3e66e39159c2e28f2fce9";
-    private static final String PUBLIC_KEY = "MIIB/TCCAWYCCQDJ7TMYJFzqYDANBgkqhkiG9w0BAQUFADBCMQswCQYDVQQGEwJjbjEVMBMGA1UEBwwMRGVmYXVsdCBDaXR5MRwwGgYDVQQKDBNEZWZhdWx0IENvbXBhbnkgTHRkMCAXDTE3MDUwOTA1MTkxMFoYDzIxMTcwNDE1MDUxOTEwWjBCMQswCQYDVQQGEwJjbjEVMBMGA1UEBwwMRGVmYXVsdCBDaXR5MRwwGgYDVQQKDBNEZWZhdWx0IENvbXBhbnkgTHRkMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDb8V0OYUGP3Fs63E1gJzJh+7iqeymjFUKJUqSD60nhWReZ+Fg3tZvKKqgNcgl7EGXp1yNifJKUNC/SedFG1IJRh5hBeDMGq0m0RQYDpf9l0umqYURpJ5fmfvH/gjfHe3Eg/NTLm7QEa0a0Il2t3Cyu5jcR4zyK6QEPn1hdIGXB5QIDAQABMA0GCSqGSIb3DQEBBQUAA4GBANhIMT0+IyJa9SU8AEyaWZZmT2KEYrjakuadOvlkn3vFdhpvNpnnXiL+cyWy2oU1Q9MAdCTiOPfXmAQt8zIvP2JC8j6yRTcxJCvBwORDyv/uBtXFxBPEC6MDfzU2gKAaHeeJUWrzRv34qFSaYkYta8canK+PSInylQTjJK9VqmjQ";
 
     private static final String AUTH_CLIENT_KEY = "1520391491841";
     private static final String AUTH_CLIENT_SECRET = "77ef58ce3afbe337da74aa8c5ab963a9";
@@ -34,23 +42,59 @@ public final class EcovacsApi {
     public boolean login() {
         try {
             httpClient.start();
-            //TODO Move metadata to suitable place
+
+            //Generate meta data
+            HashMap<String, String> meta = new HashMap<>();
+            meta.put("country", configuration.getCountry());
+            meta.put("lang", "EN");
+            meta.put("deviceId", configuration.getDeviceId());
+            meta.put("appCode", "global_e");
+            meta.put("appVersion", "1.6.3");
+            meta.put("channel", "google_play");
+            meta.put("deviceType", "1");
+
+            // Generate login Params
+            HashMap<String, String> params = new HashMap<>();
+            params.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
+            params.put("authTimespan", String.valueOf(System.currentTimeMillis()));
+            params.put("authTimeZone", "GMT-8");
+            params.put("account", configuration.getUsername());
+            params.put("password", configuration.getPasswordHash());
+
+            // SIGNING
+            HashMap<String, String> signOn = new HashMap<>(meta);
+            signOn.putAll(params);
+            StringBuilder signOnText = new StringBuilder(CLIENT_KEY);
+
+            List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
+            for (String key : keys) {
+                signOnText.append(key).append("=").append(signOn.get(key));
+            }
+            signOnText.append(SECRET);
+
+            params.put("authAppkey", CLIENT_KEY);
+            params.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+
+            // Request
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
                     configuration.getCountry(),
-                    "de",
+                    "EN",
                     configuration.getDeviceId(),
                     "global_e",
                     "1.6.3",
                     "google_play",
                     "1"
             );
-            ContentResponse response = httpClient.newRequest(loginUrl)
-                    .param("account", configuration.getUsername())
-                    .param("password", configuration.getPasswordHash())
-                    .param("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())))
-                    .send();
+            Request loginRequest = httpClient.newRequest(loginUrl);
+            params.forEach(loginRequest::param);
+            ContentResponse loginResponse = loginRequest.send();
+
             httpClient.stop();
-            return response.getStatus() == HttpStatus.OK_200;
+
+            // Read result
+            String content = loginResponse.getContentAsString();
+            System.out.println("Login response: " + content);
+            return loginResponse.getStatus() == HttpStatus.OK_200;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
