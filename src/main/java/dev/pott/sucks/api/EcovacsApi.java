@@ -1,19 +1,19 @@
 package dev.pott.sucks.api;
 
 import com.google.gson.Gson;
-import dev.pott.sucks.api.dto.LoginRequest;
+import com.google.gson.reflect.TypeToken;
+import dev.pott.sucks.api.dto.LoginResponse;
+import dev.pott.sucks.api.dto.ResponseWrapper;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public final class EcovacsApi {
@@ -27,11 +27,20 @@ public final class EcovacsApi {
     private final HttpClient httpClient;
     private final Gson gson;
     private final EcovacsApiConfiguration configuration;
+    private final Map<String, String> meta = new HashMap<>();
 
     public EcovacsApi(HttpClient httpClient, Gson gson, EcovacsApiConfiguration configuration) {
         this.httpClient = httpClient;
         this.gson = gson;
         this.configuration = configuration;
+
+        meta.put("country", configuration.getCountry());
+        meta.put("lang", "EN");
+        meta.put("deviceId", configuration.getDeviceId());
+        meta.put("appCode", "global_e");
+        meta.put("appVersion", "1.6.3");
+        meta.put("channel", "google_play");
+        meta.put("deviceType", "1");
     }
 
     /**
@@ -39,41 +48,17 @@ public final class EcovacsApi {
      *
      * @return true when login was successful
      */
-    public boolean login() {
+    public LoginResponse login() {
         try {
             httpClient.start();
 
-            //Generate meta data
-            HashMap<String, String> meta = new HashMap<>();
-            meta.put("country", configuration.getCountry());
-            meta.put("lang", "EN");
-            meta.put("deviceId", configuration.getDeviceId());
-            meta.put("appCode", "global_e");
-            meta.put("appVersion", "1.6.3");
-            meta.put("channel", "google_play");
-            meta.put("deviceType", "1");
-
             // Generate login Params
             HashMap<String, String> params = new HashMap<>();
-            params.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
-            params.put("authTimespan", String.valueOf(System.currentTimeMillis()));
-            params.put("authTimeZone", "GMT-8");
             params.put("account", configuration.getUsername());
-            params.put("password", configuration.getPasswordHash());
+            params.put("password", MD5Util.getMD5Hash(configuration.getPassword()));
+            HashMap<String, String> signedParams = getSignedParams(params);
 
             // SIGNING
-            HashMap<String, String> signOn = new HashMap<>(meta);
-            signOn.putAll(params);
-            StringBuilder signOnText = new StringBuilder(CLIENT_KEY);
-
-            List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
-            for (String key : keys) {
-                signOnText.append(key).append("=").append(signOn.get(key));
-            }
-            signOnText.append(SECRET);
-
-            params.put("authAppkey", CLIENT_KEY);
-            params.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
 
             // Request
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
@@ -85,20 +70,56 @@ public final class EcovacsApi {
                     "google_play",
                     "1"
             );
+
             Request loginRequest = httpClient.newRequest(loginUrl);
-            params.forEach(loginRequest::param);
+            signedParams.forEach(loginRequest::param);
             ContentResponse loginResponse = loginRequest.send();
 
             httpClient.stop();
 
-            // Read result
-            String content = loginResponse.getContentAsString();
-            System.out.println("Login response: " + content);
-            return loginResponse.getStatus() == HttpStatus.OK_200;
+            if (loginResponse.getStatus() == HttpStatus.OK_200) {
+                return getLoginResponse(loginResponse);
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
+    }
+
+    private LoginResponse getLoginResponse(ContentResponse loginResponse) {
+        String content = loginResponse.getContentAsString();
+        Type loginResponseWrapperType = new TypeToken<ResponseWrapper<LoginResponse>>() {
+        }.getType();
+        ResponseWrapper<LoginResponse> response = gson.fromJson(content, loginResponseWrapperType);
+        if (response.isSuccess()) {
+            return response.getData();
+        } else {
+            return null;
+        }
+    }
+
+    private HashMap<String, String> getSignedParams(Map<String, String> params) {
+        HashMap<String, String> signedParams = new HashMap<>();
+        signedParams.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
+        signedParams.put("authTimespan", String.valueOf(System.currentTimeMillis()));
+        signedParams.put("authTimeZone", "GMT-8");
+        signedParams.putAll(params);
+
+        HashMap<String, String> signOn = new HashMap<>(meta);
+        signOn.putAll(signedParams);
+        StringBuilder signOnText = new StringBuilder(CLIENT_KEY);
+
+        List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
+        for (String key : keys) {
+            signOnText.append(key).append("=").append(signOn.get(key));
+        }
+        signOnText.append(SECRET);
+
+        signedParams.put("authAppkey", CLIENT_KEY);
+        signedParams.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+        return signedParams;
     }
 
 }

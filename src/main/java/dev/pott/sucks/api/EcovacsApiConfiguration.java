@@ -1,18 +1,18 @@
 package dev.pott.sucks.api;
 
-import org.eclipse.jetty.util.StringUtil;
+import dev.pott.sucks.util.MD5Util;
 
 public final class EcovacsApiConfiguration {
     private final String deviceId;
     private final String username;
-    private final String passwordHash;
+    private final String password;
     private final String continent;
     private final String country;
 
-    public EcovacsApiConfiguration(String deviceId, String username, String passwordHash, String continent, String country) {
+    public EcovacsApiConfiguration(String deviceId,String username, String password, String continent, String country) {
         this.deviceId = deviceId;
         this.username = username;
-        this.passwordHash = passwordHash;
+        this.password = password;
         this.continent = continent;
         this.country = country;
     }
@@ -25,8 +25,8 @@ public final class EcovacsApiConfiguration {
         return username;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getPassword() {
+        return password;
     }
 
     public String getContinent() {

@@ -3,6 +3,7 @@ package dev.pott.sucks;
 import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
+import dev.pott.sucks.api.dto.LoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
@@ -24,11 +25,11 @@ public class Main {
                 new EcovacsApiConfiguration(
                         MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())),
                         "user",
-                        MD5Util.getMD5Hash("password"),
+                        "password",
                         "EU",
                         "DE"
                 )
         );
-        api.login();
+        LoginResponse response = api.login();
     }
 }
