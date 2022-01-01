@@ -42,16 +42,10 @@ public final class EcovacsApiUrlFactory {
         return getMainUrl(country, language, deviceId, appCode, appVersion, channel, deviceType) + MAIN_URL_LOGIN_PATH;
     }
 
-    public static String getAuthCodeUrl(
-            String country,
-            String language,
-            String deviceId,
-            String appCode,
-            String appVersion,
-            String channel,
-            String deviceType
-    ) {
-        return getMainUrl(country, language, deviceId, appCode, appVersion, channel, deviceType) + MAIN_URL_AUTH_CODE_PATH;
+    public static String getAuthCodeUrl(String country) {
+        HashMap<String, String> placeholder = new HashMap<>();
+        placeholder.put(COUNTRY_PLACEHOLDER, country);
+        return StringPlaceholderUtils.replacePlaceHolders(PORTAL_GLOBAL_AUTH_CODE, placeholder);
     }
 
     private static String getMainUrl(

@@ -2,6 +2,7 @@ package dev.pott.sucks.api;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import dev.pott.sucks.api.dto.AuthCodeResponse;
 import dev.pott.sucks.api.dto.LoginResponse;
 import dev.pott.sucks.api.dto.ResponseWrapper;
 import dev.pott.sucks.util.MD5Util;
@@ -56,6 +57,7 @@ public final class EcovacsApi {
             HashMap<String, String> loginParameters = new HashMap<>();
             loginParameters.put("account", configuration.getUsername());
             loginParameters.put("password", MD5Util.getMD5Hash(configuration.getPassword()));
+            loginParameters.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
             HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
 
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
@@ -75,7 +77,8 @@ public final class EcovacsApi {
             httpClient.stop();
 
             if (loginResponse.getStatus() == HttpStatus.OK_200) {
-                return getLoginResponse(loginResponse);
+                Type responseType = new TypeToken<ResponseWrapper<LoginResponse>>() {}.getType();
+                return getContent(loginResponse, responseType);
             } else {
                 return null;
             }
@@ -85,11 +88,9 @@ public final class EcovacsApi {
         }
     }
 
-    private LoginResponse getLoginResponse(ContentResponse loginResponse) {
+    private <T> T getContent(ContentResponse loginResponse, Type dataType) {
         String content = loginResponse.getContentAsString();
-        Type loginResponseWrapperType = new TypeToken<ResponseWrapper<LoginResponse>>() {
-        }.getType();
-        ResponseWrapper<LoginResponse> response = gson.fromJson(content, loginResponseWrapperType);
+        ResponseWrapper<T> response = gson.fromJson(content, dataType);
         if (response.isSuccess()) {
             return response.getData();
         } else {
@@ -97,9 +98,38 @@ public final class EcovacsApi {
         }
     }
 
+    public AuthCodeResponse getAuthCode(LoginResponse loginResponse) {
+        try {
+            httpClient.start();
+            HashMap<String, String> authCodeParameters = new HashMap<>();
+            authCodeParameters.put("uid", loginResponse.getUid());
+            authCodeParameters.put("accessToken", loginResponse.getAccessToken());
+            authCodeParameters.put("bizType", "ECOVACS_IOT");
+            authCodeParameters.put("deviceId", configuration.getDeviceId());
+            HashMap<String, String> signedRequestParameters = getSignedAuthCodeRequestParameters(authCodeParameters);
+
+            String loginUrl = EcovacsApiUrlFactory.getAuthCodeUrl(configuration.getCountry());
+
+            Request authCodeRequest = httpClient.newRequest(loginUrl);
+            signedRequestParameters.forEach(authCodeRequest::param);
+            ContentResponse authCodeResponse = authCodeRequest.send();
+
+            httpClient.stop();
+
+            if (authCodeResponse.getStatus() == HttpStatus.OK_200) {
+                Type responseType = new TypeToken<ResponseWrapper<AuthCodeResponse>>() {}.getType();
+                return getContent(authCodeResponse, responseType);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
         HashMap<String, String> signedRequestParameters = new HashMap<>();
-        signedRequestParameters.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
         signedRequestParameters.put("authTimespan", String.valueOf(System.currentTimeMillis()));
         signedRequestParameters.put("authTimeZone", "GMT-8");
         signedRequestParameters.putAll(requestSpecificParameters);
@@ -115,6 +145,25 @@ public final class EcovacsApi {
         signOnText.append(SECRET);
 
         signedRequestParameters.put("authAppkey", CLIENT_KEY);
+        signedRequestParameters.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+        return signedRequestParameters;
+    }
+
+    private HashMap<String, String> getSignedAuthCodeRequestParameters(Map<String, String> requestSpecificParameters) {
+        HashMap<String, String> signedRequestParameters = new HashMap<>(requestSpecificParameters);
+        signedRequestParameters.put("authTimespan", String.valueOf(System.currentTimeMillis()));
+
+        HashMap<String, String> signOn = new HashMap<>(signedRequestParameters);
+        signOn.put("openId", "global");
+        StringBuilder signOnText = new StringBuilder(AUTH_CLIENT_KEY);
+
+        List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
+        for (String key : keys) {
+            signOnText.append(key).append("=").append(signOn.get(key));
+        }
+        signOnText.append(AUTH_CLIENT_SECRET);
+
+        signedRequestParameters.put("authAppkey", AUTH_CLIENT_KEY);
         signedRequestParameters.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
         return signedRequestParameters;
     }
