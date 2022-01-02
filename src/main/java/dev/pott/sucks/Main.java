@@ -35,6 +35,7 @@ public class Main {
         LoginResponse loginResponse = api.login();
         AuthCodeResponse authCodeResponse = api.getAuthCode(loginResponse);
         LoginAcknowledgementResponse acknowledgementResponse = api.acknowledgeLogin(authCodeResponse, loginResponse);
+        String devices = api.getDevices(acknowledgementResponse);
         System.out.println(authCodeResponse);
     }
 }
