@@ -1,11 +1,8 @@
 package dev.pott.sucks.api;
 
-public class PortalTodo {
+import com.google.gson.annotations.SerializedName;
 
-    private PortalTodo() {
-        //Prevent instantiation
-    }
-
-    public static final String TODO_GET_DEVICE_LIST = "GetDeviceList";
-    public static final String TODO_LOGIN_BY_IT_TOKEN = "loginByItToken";
+public enum PortalTodo {
+    @SerializedName("GetDeviceList") GET_DEVICE_LIST,
+    @SerializedName("loginByItToken") LOGIN_BY_TOKEN;
 }

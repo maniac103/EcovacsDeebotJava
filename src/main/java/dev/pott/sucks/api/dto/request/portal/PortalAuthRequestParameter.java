@@ -27,24 +27,4 @@ public class PortalAuthRequestParameter {
         this.resource = resource;
     }
 
-    public String getWith() {
-        return with;
-    }
-
-    public String getUserid() {
-        return userid;
-    }
-
-    public String getRealm() {
-        return realm;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getResource() {
-        return resource;
-    }
-
 }

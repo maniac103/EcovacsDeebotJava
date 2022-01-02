@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequest;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequestParameter;
+import dev.pott.sucks.api.dto.request.portal.PortalIotProductRequest;
 import dev.pott.sucks.api.dto.request.portal.PortalLoginRequest;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
 import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
@@ -46,7 +48,7 @@ public final class EcovacsApi {
         meta.put(RequestQueryParameter.META_DEVICE_TYPE, configuration.getDeviceType());
     }
 
-    public ResponseWrapper<AccessData> login() {
+    public AccessData login() {
         try {
             httpClient.start();
 
@@ -58,6 +60,8 @@ public final class EcovacsApi {
                     RequestQueryParameter.AUTH_REQUEST_ID,
                     MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis()))
             );
+            loginParameters.put(RequestQueryParameter.AUTH_TIME_ZONE, configuration.getTimeZone());
+            loginParameters.putAll(meta);
             HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
 
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
@@ -79,17 +83,18 @@ public final class EcovacsApi {
             if (loginResponse.getStatus() == HttpStatus.OK_200) {
                 Type responseType = new TypeToken<ResponseWrapper<AccessData>>() {
                 }.getType();
-                return getMainResponse(loginResponse, responseType);
-            } else {
-                return null;
+                ResponseWrapper<AccessData> response = gson.fromJson(loginResponse.getContentAsString(), responseType);
+                if (response.isSuccess()) {
+                    return response.getData();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 
-    public ResponseWrapper<AuthCode> getAuthCode(AccessData accessData) {
+    public AuthCode getAuthCode(AccessData accessData) {
         try {
             httpClient.start();
             HashMap<String, String> authCodeParameters = new HashMap<>();
@@ -97,7 +102,10 @@ public final class EcovacsApi {
             authCodeParameters.put(RequestQueryParameter.AUTH_CODE_ACCESS_TOKEN, accessData.getAccessToken());
             authCodeParameters.put(RequestQueryParameter.AUTH_CODE_BIZ_TYPE, configuration.getBizType());
             authCodeParameters.put(RequestQueryParameter.AUTH_CODE_DEVICE_ID, configuration.getDeviceId());
-            HashMap<String, String> signedRequestParameters = getSignedAuthCodeRequestParameters(authCodeParameters);
+            authCodeParameters.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
+
+            HashMap<String, String> signedRequestParameters = getSignedRequestParameters(authCodeParameters,
+                    ClientKeys.AUTH_CLIENT_KEY, ClientKeys.AUTH_CLIENT_SECRET);
 
             String authCodeUrl = EcovacsApiUrlFactory.getAuthUrl(configuration.getCountry());
 
@@ -110,21 +118,22 @@ public final class EcovacsApi {
             if (authCodeResponse.getStatus() == HttpStatus.OK_200) {
                 Type responseType = new TypeToken<ResponseWrapper<AuthCode>>() {
                 }.getType();
-                return getMainResponse(authCodeResponse, responseType);
-            } else {
-                return null;
+                ResponseWrapper<AuthCode> response = gson.fromJson(authCodeResponse.getContentAsString(), responseType);
+                if (response.isSuccess()) {
+                    return response.getData();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 
     public PortalLoginResponse portalLogin(AuthCode authCode, AccessData accessData) {
         try {
             httpClient.start();
             PortalLoginRequest loginRequestData = new PortalLoginRequest(
-                    PortalTodo.TODO_LOGIN_BY_IT_TOKEN,
+                    PortalTodo.LOGIN_BY_TOKEN,
                     configuration.getCountry(),
                     "",
                     configuration.getOrg(),
@@ -146,14 +155,15 @@ public final class EcovacsApi {
             httpClient.stop();
 
             if (portalLoginResponse.getStatus() == HttpStatus.OK_200) {
-                return getPortalLoginResponse(portalLoginResponse);
-            } else {
-                return null;
+                PortalLoginResponse response = gson.fromJson(portalLoginResponse.getContentAsString(), PortalLoginResponse.class);
+                if (response.wasSuccessful()) {
+                    return response;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 
     public PortalDeviceResponse getDevices(PortalLoginResponse portalLoginResponse) {
@@ -168,7 +178,7 @@ public final class EcovacsApi {
 
             );
             PortalAuthRequest data = new PortalAuthRequest(
-                    PortalTodo.TODO_GET_DEVICE_LIST,
+                    PortalTodo.GET_DEVICE_LIST,
                     portalLoginResponse.getUserId(),
                     deviceRequestData
             );
@@ -194,57 +204,56 @@ public final class EcovacsApi {
         }
     }
 
-    private <T> T getMainResponse(ContentResponse loginResponse, Type dataType) {
-        String content = loginResponse.getContentAsString();
-        return gson.fromJson(content, dataType);
-    }
-
-    private PortalLoginResponse getPortalLoginResponse(ContentResponse contentResponse) {
-        String content = contentResponse.getContentAsString();
-        PortalLoginResponse response = gson.fromJson(content, PortalLoginResponse.class);
-        if (response.getResult().equals("ok")) {
-            return response;
-        } else {
+    public PortalIotProductResponse getIotProductMap(PortalLoginResponse portalLoginResponse) {
+        try {
+            httpClient.start();
+            PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
+                    configuration.getPortalAUthRequestWith(),
+                    portalLoginResponse.getUserId(),
+                    configuration.getRealm(),
+                    portalLoginResponse.getToken(),
+                    configuration.getDeviceId().substring(0, 8)
+            );
+            PortalIotProductRequest data = new PortalIotProductRequest(deviceRequestData);
+            String json = gson.toJson(data);
+            String url = EcovacsApiUrlFactory.getPortalProductIotMapUrl(configuration.getContinent());
+            Request deviceRequest = httpClient.newRequest(url)
+                    .method(HttpMethod.POST)
+                    .headers(httpFields -> httpFields.add(HttpHeader.CONTENT_TYPE, "application/json"))
+                    .body(new StringRequestContent(json));
+            ContentResponse deviceResponse = deviceRequest.send();
+            httpClient.stop();
+            if (deviceResponse.getStatus() == HttpStatus.OK_200) {
+                return gson.fromJson(
+                        deviceResponse.getContentAsString(),
+                        PortalIotProductResponse.class
+                );
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
-        HashMap<String, String> signedRequestParameters = new HashMap<>();
-        signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
-        signedRequestParameters.put(RequestQueryParameter.AUTH_TIME_ZONE, configuration.getTimeZone());
-        signedRequestParameters.putAll(requestSpecificParameters);
-
-        HashMap<String, String> signOn = new HashMap<>(meta);
-        signOn.putAll(signedRequestParameters);
-        StringBuilder signOnText = new StringBuilder(ClientKeys.CLIENT_KEY);
-
-        List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
-        for (String key : keys) {
-            signOnText.append(key).append("=").append(signOn.get(key));
-        }
-        signOnText.append(ClientKeys.SECRET);
-
-        signedRequestParameters.put(RequestQueryParameter.AUTH_APPKEY, ClientKeys.CLIENT_KEY);
-        signedRequestParameters.put(RequestQueryParameter.AUTH_SIGN, MD5Util.getMD5Hash(signOnText.toString()));
-        return signedRequestParameters;
+        return getSignedRequestParameters(requestSpecificParameters, ClientKeys.CLIENT_KEY, ClientKeys.SECRET);
     }
 
-    private HashMap<String, String> getSignedAuthCodeRequestParameters(Map<String, String> requestSpecificParameters) {
+    private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters,
+                                                               String clientKey,
+                                                               String clientSecret) {
         HashMap<String, String> signedRequestParameters = new HashMap<>(requestSpecificParameters);
         signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
 
-        HashMap<String, String> signOn = new HashMap<>(signedRequestParameters);
-        signOn.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
-        StringBuilder signOnText = new StringBuilder(ClientKeys.AUTH_CLIENT_KEY);
+        StringBuilder signOnText = new StringBuilder(clientKey);
+        signedRequestParameters.keySet().stream().sorted().forEach(key -> {
+            signOnText.append(key).append("=").append(signedRequestParameters.get(key));
+        });
+        signOnText.append(clientSecret);
 
-        List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
-        for (String key : keys) {
-            signOnText.append(key).append("=").append(signOn.get(key));
-        }
-        signOnText.append(ClientKeys.AUTH_CLIENT_SECRET);
-
-        signedRequestParameters.put(RequestQueryParameter.AUTH_APPKEY, ClientKeys.AUTH_CLIENT_KEY);
+        signedRequestParameters.put(RequestQueryParameter.AUTH_APPKEY, clientKey);
         signedRequestParameters.put(RequestQueryParameter.AUTH_SIGN, MD5Util.getMD5Hash(signOnText.toString()));
         return signedRequestParameters;
     }

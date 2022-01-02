@@ -2,10 +2,12 @@ package dev.pott.sucks.api.dto.request.portal;
 
 import com.google.gson.annotations.SerializedName;
 
+import dev.pott.sucks.api.PortalTodo;
+
 public class PortalLoginRequest {
 
     @SerializedName("todo")
-    private final String todo;
+    private final PortalTodo todo;
 
     @SerializedName("country")
     private final String country;
@@ -31,7 +33,7 @@ public class PortalLoginRequest {
     @SerializedName("edition")
     private final String edition;
 
-    public PortalLoginRequest(String todo, String country, String last, String org, String resource, String realm, String token, String userId, String edition) {
+    public PortalLoginRequest(PortalTodo todo, String country, String last, String org, String resource, String realm, String token, String userId, String edition) {
         this.todo = todo;
         this.country = country;
         this.last = last;
@@ -43,39 +45,4 @@ public class PortalLoginRequest {
         this.edition = edition;
     }
 
-    public String getTodo() {
-        return todo;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public String getLast() {
-        return last;
-    }
-
-    public String getOrg() {
-        return org;
-    }
-
-    public String getResource() {
-        return resource;
-    }
-
-    public String getRealm() {
-        return realm;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getEdition() {
-        return edition;
-    }
 }

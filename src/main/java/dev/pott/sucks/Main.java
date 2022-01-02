@@ -1,12 +1,17 @@
 package dev.pott.sucks;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
-import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.Device;
+import dev.pott.sucks.api.dto.response.portal.IotProduct;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
@@ -24,7 +29,7 @@ public class Main {
         HttpClient httpClient = new HttpClient(new HttpClientTransportDynamic(clientConnector));
         httpClient.setConnectTimeout(60);
         EcovacsApi api = new EcovacsApi(
-                new HttpClient(),
+                httpClient,
                 new GsonBuilder().create(),
                 new EcovacsApiConfiguration(
                         MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())),
@@ -35,26 +40,30 @@ public class Main {
                         "EN"
                 )
         );
-        ResponseWrapper<AccessData> accessDataResponse = api.login();
-        if (accessDataResponse != null && accessDataResponse.isSuccess()) {
-            authenticate(api, accessDataResponse);
-        }
-    }
+        AccessData accessDataResponse = api.login();
+        if (accessDataResponse != null) {
+            AuthCode authCodeResponse = api.getAuthCode(accessDataResponse);
+            if (authCodeResponse != null) {
+                PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse, accessDataResponse);
+                if (acknowledgementResponse != null) {
+                    PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
+                    System.out.println(devices);
+                    PortalIotProductResponse products = api.getIotProductMap(acknowledgementResponse);
+                    System.out.println(products);
 
-    private static void authenticate(EcovacsApi api, ResponseWrapper<AccessData> accessDataResponse) {
-        ResponseWrapper<AuthCode> authCodeResponse = api.getAuthCode(accessDataResponse.getData());
-        if (authCodeResponse != null && authCodeResponse.isSuccess()) {
-            requestDevices(api, accessDataResponse, authCodeResponse);
+                    for (Device dev : devices.getDevices()) {
+                        List<IotProduct> matchingProducts = products.getProducts()
+                                .stream()
+                                .filter(prod -> dev.getDeviceClass().equals(prod.getClassId()))
+                                .collect(Collectors.toList());
+                        if (matchingProducts.isEmpty()) {
+                            System.out.println("Did not find device class for " + dev.getName());
+                        } else {
+                            System.out.println("Device " + dev.getName() + " is a " + matchingProducts.get(0).getDefinition().name);
+                        }
+                    }
+                }
+            }
         }
-    }
-
-    private static void requestDevices(
-            EcovacsApi api,
-            ResponseWrapper<AccessData> accessDataResponse,
-            ResponseWrapper<AuthCode> authCodeResponse
-    ) {
-        PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse.getData(), accessDataResponse.getData());
-        PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
-        System.out.println(devices);
     }
 }
