@@ -124,7 +124,7 @@ public final class EcovacsApi {
         try {
             httpClient.start();
             PortalLoginRequest loginRequestData = new PortalLoginRequest(
-                    PortalTodo.TODO_LOGIN_BY_IT_TOKEN,
+                    PortalTodo.LOGIN_BY_TOKEN,
                     configuration.getCountry(),
                     "",
                     configuration.getOrg(),
@@ -168,7 +168,7 @@ public final class EcovacsApi {
 
             );
             PortalAuthRequest data = new PortalAuthRequest(
-                    PortalTodo.TODO_GET_DEVICE_LIST,
+                    PortalTodo.GET_DEVICE_LIST,
                     portalLoginResponse.getUserId(),
                     deviceRequestData
             );
