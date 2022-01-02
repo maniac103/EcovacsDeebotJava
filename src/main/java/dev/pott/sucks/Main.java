@@ -37,24 +37,26 @@ public class Main {
         );
         ResponseWrapper<AccessData> accessDataResponse = api.login();
         if (accessDataResponse != null && accessDataResponse.isSuccess()) {
-            authenticate(api, accessDataResponse);
+            authenticate(api, accessDataResponse.getData());
         }
     }
 
-    private static void authenticate(EcovacsApi api, ResponseWrapper<AccessData> accessDataResponse) {
-        ResponseWrapper<AuthCode> authCodeResponse = api.getAuthCode(accessDataResponse.getData());
+    private static void authenticate(EcovacsApi api, AccessData accessDataResponse) {
+        ResponseWrapper<AuthCode> authCodeResponse = api.getAuthCode(accessDataResponse);
         if (authCodeResponse != null && authCodeResponse.isSuccess()) {
-            requestDevices(api, accessDataResponse, authCodeResponse);
+            requestDevices(api, accessDataResponse, authCodeResponse.getData());
         }
     }
 
     private static void requestDevices(
             EcovacsApi api,
-            ResponseWrapper<AccessData> accessDataResponse,
-            ResponseWrapper<AuthCode> authCodeResponse
+            AccessData accessDataResponse,
+            AuthCode authCodeResponse
     ) {
-        PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse.getData(), accessDataResponse.getData());
-        PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
-        System.out.println(devices);
+        PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse, accessDataResponse);
+        if (acknowledgementResponse != null) {
+            PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
+            System.out.println(devices);
+        }
     }
 }
