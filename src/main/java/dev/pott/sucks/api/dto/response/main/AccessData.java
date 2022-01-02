@@ -1,8 +1,8 @@
-package dev.pott.sucks.api.dto;
+package dev.pott.sucks.api.dto.response.main;
 
 import com.google.gson.annotations.SerializedName;
 
-public class LoginResponse {
+public class AccessData {
 
     @SerializedName("uid")
     private final String uid;
@@ -28,7 +28,7 @@ public class LoginResponse {
     @SerializedName("ucUid")
     private final String ucUid;
 
-    public LoginResponse(
+    public AccessData(
             String uid,
             String accessToken,
             String userName,

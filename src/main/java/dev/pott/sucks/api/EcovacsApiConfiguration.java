@@ -1,7 +1,5 @@
 package dev.pott.sucks.api;
 
-import dev.pott.sucks.util.MD5Util;
-
 public final class EcovacsApiConfiguration {
     private final String deviceId;
     private final String username;
@@ -35,5 +33,9 @@ public final class EcovacsApiConfiguration {
 
     public String getCountry() {
         return country;
+    }
+
+    public String getResource() {
+        return deviceId.substring(0, 8);
     }
 }

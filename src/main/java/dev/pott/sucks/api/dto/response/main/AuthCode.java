@@ -1,8 +1,8 @@
-package dev.pott.sucks.api.dto;
+package dev.pott.sucks.api.dto.response.main;
 
 import com.google.gson.annotations.SerializedName;
 
-public class AuthCodeResponse {
+public class AuthCode {
 
     @SerializedName("ecovacsUid")
     private final String ecovacsUid;
@@ -10,7 +10,7 @@ public class AuthCodeResponse {
     @SerializedName("authCode")
     private final String authCode;
 
-    public AuthCodeResponse(String ecovacsUid, String authCode) {
+    public AuthCode(String ecovacsUid, String authCode) {
         this.ecovacsUid = ecovacsUid;
         this.authCode = authCode;
     }

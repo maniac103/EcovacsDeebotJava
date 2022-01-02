@@ -1,4 +1,4 @@
-package dev.pott.sucks.api.dto;
+package dev.pott.sucks.api.dto.response.main;
 
 import com.google.gson.annotations.SerializedName;
 

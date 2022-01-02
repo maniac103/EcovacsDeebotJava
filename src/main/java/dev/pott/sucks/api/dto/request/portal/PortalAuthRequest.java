@@ -1,8 +1,8 @@
-package dev.pott.sucks.api.dto.request;
+package dev.pott.sucks.api.dto.request.portal;
 
 import com.google.gson.annotations.SerializedName;
 
-public class PortalRequest {
+public class PortalAuthRequest {
 
     @SerializedName("todo")
     private final String todo;
@@ -13,7 +13,7 @@ public class PortalRequest {
     @SerializedName("auth")
     private final PortalAuthRequestParameter auth;
 
-    public PortalRequest(String todo, String userId, PortalAuthRequestParameter auth) {
+    public PortalAuthRequest(String todo, String userId, PortalAuthRequestParameter auth) {
         this.todo = todo;
         this.userId = userId;
         this.auth = auth;

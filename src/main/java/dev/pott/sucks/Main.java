@@ -3,9 +3,11 @@ package dev.pott.sucks;
 import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
-import dev.pott.sucks.api.dto.AuthCodeResponse;
-import dev.pott.sucks.api.dto.LoginAcknowledgementResponse;
-import dev.pott.sucks.api.dto.LoginResponse;
+import dev.pott.sucks.api.dto.response.main.AccessData;
+import dev.pott.sucks.api.dto.response.main.AuthCode;
+import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
@@ -32,10 +34,26 @@ public class Main {
                         "DE"
                 )
         );
-        LoginResponse loginResponse = api.login();
-        AuthCodeResponse authCodeResponse = api.getAuthCode(loginResponse);
-        LoginAcknowledgementResponse acknowledgementResponse = api.acknowledgeLogin(authCodeResponse, loginResponse);
-        String devices = api.getDevices(acknowledgementResponse);
-        System.out.println(authCodeResponse);
+        ResponseWrapper<AccessData> accessDataResponse = api.login();
+        if (accessDataResponse != null && accessDataResponse.isSuccess()) {
+            authenticate(api, accessDataResponse);
+        }
+    }
+
+    private static void authenticate(EcovacsApi api, ResponseWrapper<AccessData> accessDataResponse) {
+        ResponseWrapper<AuthCode> authCodeResponse = api.getAuthCode(accessDataResponse.getData());
+        if (authCodeResponse != null && authCodeResponse.isSuccess()) {
+            requestDevices(api, accessDataResponse, authCodeResponse);
+        }
+    }
+
+    private static void requestDevices(
+            EcovacsApi api,
+            ResponseWrapper<AccessData> accessDataResponse,
+            ResponseWrapper<AuthCode> authCodeResponse
+    ) {
+        PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse.getData(), accessDataResponse.getData());
+        PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
+        System.out.println(devices);
     }
 }

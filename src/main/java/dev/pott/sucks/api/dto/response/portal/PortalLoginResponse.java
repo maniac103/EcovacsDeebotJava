@@ -1,8 +1,8 @@
-package dev.pott.sucks.api.dto;
+package dev.pott.sucks.api.dto.response.portal;
 
 import com.google.gson.annotations.SerializedName;
 
-public class LoginAcknowledgementResponse {
+public class PortalLoginResponse {
 
     @SerializedName("todo")
     private final String todo;
@@ -22,7 +22,7 @@ public class LoginAcknowledgementResponse {
     @SerializedName("last")
     private final String last;
 
-    public LoginAcknowledgementResponse(String todo, String result, String userId, String resource, String token, String last) {
+    public PortalLoginResponse(String todo, String result, String userId, String resource, String token, String last) {
         this.todo = todo;
         this.result = result;
         this.userId = userId;
