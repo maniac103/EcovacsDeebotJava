@@ -31,7 +31,8 @@ public class Main {
                         "user",
                         "password",
                         "EU",
-                        "DE"
+                        "DE",
+                        "EN"
                 )
         );
         ResponseWrapper<AccessData> accessDataResponse = api.login();

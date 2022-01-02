@@ -31,7 +31,6 @@ public class PortalLoginResponse {
         this.last = last;
     }
 
-
     public String getTodo() {
         return todo;
     }

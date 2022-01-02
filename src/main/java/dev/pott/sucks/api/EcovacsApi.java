@@ -23,16 +23,9 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class EcovacsApi {
-
-    private static final String CLIENT_KEY = "1520391301804";
-    private static final String SECRET = "6c319b2a5cd3e66e39159c2e28f2fce9";
-
-    private static final String AUTH_CLIENT_KEY = "1520391491841";
-    private static final String AUTH_CLIENT_SECRET = "77ef58ce3afbe337da74aa8c5ab963a9";
 
     private final HttpClient httpClient;
     private final Gson gson;
@@ -44,13 +37,13 @@ public final class EcovacsApi {
         this.gson = gson;
         this.configuration = configuration;
 
-        meta.put("country", configuration.getCountry());
-        meta.put("lang", "EN");
-        meta.put("deviceId", configuration.getDeviceId());
-        meta.put("appCode", "global_e");
-        meta.put("appVersion", "1.6.3");
-        meta.put("channel", "google_play");
-        meta.put("deviceType", "1");
+        meta.put(RequestQueryParameter.META_COUNTRY, configuration.getCountry());
+        meta.put(RequestQueryParameter.META_LANG, configuration.getLanguage());
+        meta.put(RequestQueryParameter.META_DEVICE_ID, configuration.getDeviceId());
+        meta.put(RequestQueryParameter.META_APP_CODE, configuration.getAppCode());
+        meta.put(RequestQueryParameter.META_APP_VERSION, configuration.getAppVersion());
+        meta.put(RequestQueryParameter.META_CHANNEL, configuration.getChannel());
+        meta.put(RequestQueryParameter.META_DEVICE_TYPE, configuration.getDeviceType());
     }
 
     public ResponseWrapper<AccessData> login() {
@@ -59,19 +52,22 @@ public final class EcovacsApi {
 
             // Generate login Params
             HashMap<String, String> loginParameters = new HashMap<>();
-            loginParameters.put("account", configuration.getUsername());
-            loginParameters.put("password", MD5Util.getMD5Hash(configuration.getPassword()));
-            loginParameters.put("requestId", MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
+            loginParameters.put(RequestQueryParameter.AUTH_ACCOUNT, configuration.getUsername());
+            loginParameters.put(RequestQueryParameter.AUTH_PASSWORD, MD5Util.getMD5Hash(configuration.getPassword()));
+            loginParameters.put(
+                    RequestQueryParameter.AUTH_REQUEST_ID,
+                    MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis()))
+            );
             HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
 
             String loginUrl = EcovacsApiUrlFactory.getLoginUrl(
                     configuration.getCountry(),
-                    "EN",
+                    configuration.getLanguage(),
                     configuration.getDeviceId(),
-                    "global_e",
-                    "1.6.3",
-                    "google_play",
-                    "1"
+                    configuration.getAppCode(),
+                    configuration.getAppVersion(),
+                    configuration.getChannel(),
+                    configuration.getDeviceType()
             );
 
             Request loginRequest = httpClient.newRequest(loginUrl).method(HttpMethod.GET);
@@ -97,10 +93,10 @@ public final class EcovacsApi {
         try {
             httpClient.start();
             HashMap<String, String> authCodeParameters = new HashMap<>();
-            authCodeParameters.put("uid", accessData.getUid());
-            authCodeParameters.put("accessToken", accessData.getAccessToken());
-            authCodeParameters.put("bizType", "ECOVACS_IOT");
-            authCodeParameters.put("deviceId", configuration.getDeviceId());
+            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_UID, accessData.getUid());
+            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_ACCESS_TOKEN, accessData.getAccessToken());
+            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_BIZ_TYPE, configuration.getBizType());
+            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_DEVICE_ID, configuration.getDeviceId());
             HashMap<String, String> signedRequestParameters = getSignedAuthCodeRequestParameters(authCodeParameters);
 
             String authCodeUrl = EcovacsApiUrlFactory.getAuthUrl(configuration.getCountry());
@@ -128,15 +124,15 @@ public final class EcovacsApi {
         try {
             httpClient.start();
             PortalLoginRequest loginRequestData = new PortalLoginRequest(
-                    "loginByItToken",
+                    PortalTodo.TODO_LOGIN_BY_IT_TOKEN,
                     configuration.getCountry(),
                     "",
-                    "ECOWW",
+                    configuration.getOrg(),
                     configuration.getResource(),
-                    "ecouser.net",
+                    configuration.getRealm(),
                     authCode.getAuthCode(),
                     accessData.getUid(),
-                    "ECOGLOBLE"
+                    configuration.getEdition()
             );
             String json = gson.toJson(loginRequestData);
 
@@ -164,15 +160,15 @@ public final class EcovacsApi {
         try {
             httpClient.start();
             PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
-                    "users",
+                    configuration.getPortalAUthRequestWith(),
                     portalLoginResponse.getUserId(),
-                    "ecouser.net",
+                    configuration.getRealm(),
                     portalLoginResponse.getToken(),
                     configuration.getDeviceId().substring(0, 8)
 
             );
             PortalAuthRequest data = new PortalAuthRequest(
-                    "GetDeviceList",
+                    PortalTodo.TODO_GET_DEVICE_LIST,
                     portalLoginResponse.getUserId(),
                     deviceRequestData
             );
@@ -206,7 +202,7 @@ public final class EcovacsApi {
     private PortalLoginResponse getPortalLoginResponse(ContentResponse contentResponse) {
         String content = contentResponse.getContentAsString();
         PortalLoginResponse response = gson.fromJson(content, PortalLoginResponse.class);
-        if (Objects.equals(response.getResult(), "ok")) {
+        if (response.getResult().equals("ok")) {
             return response;
         } else {
             return null;
@@ -215,41 +211,41 @@ public final class EcovacsApi {
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
         HashMap<String, String> signedRequestParameters = new HashMap<>();
-        signedRequestParameters.put("authTimespan", String.valueOf(System.currentTimeMillis()));
-        signedRequestParameters.put("authTimeZone", "GMT-8");
+        signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
+        signedRequestParameters.put(RequestQueryParameter.AUTH_TIME_ZONE, configuration.getTimeZone());
         signedRequestParameters.putAll(requestSpecificParameters);
 
         HashMap<String, String> signOn = new HashMap<>(meta);
         signOn.putAll(signedRequestParameters);
-        StringBuilder signOnText = new StringBuilder(CLIENT_KEY);
+        StringBuilder signOnText = new StringBuilder(ClientKeys.CLIENT_KEY);
 
         List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
         for (String key : keys) {
             signOnText.append(key).append("=").append(signOn.get(key));
         }
-        signOnText.append(SECRET);
+        signOnText.append(ClientKeys.SECRET);
 
-        signedRequestParameters.put("authAppkey", CLIENT_KEY);
-        signedRequestParameters.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+        signedRequestParameters.put(RequestQueryParameter.AUTH_APPKEY, ClientKeys.CLIENT_KEY);
+        signedRequestParameters.put(RequestQueryParameter.AUTH_SIGN, MD5Util.getMD5Hash(signOnText.toString()));
         return signedRequestParameters;
     }
 
     private HashMap<String, String> getSignedAuthCodeRequestParameters(Map<String, String> requestSpecificParameters) {
         HashMap<String, String> signedRequestParameters = new HashMap<>(requestSpecificParameters);
-        signedRequestParameters.put("authTimespan", String.valueOf(System.currentTimeMillis()));
+        signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
 
         HashMap<String, String> signOn = new HashMap<>(signedRequestParameters);
-        signOn.put("openId", "global");
-        StringBuilder signOnText = new StringBuilder(AUTH_CLIENT_KEY);
+        signOn.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
+        StringBuilder signOnText = new StringBuilder(ClientKeys.AUTH_CLIENT_KEY);
 
         List<String> keys = signOn.keySet().stream().sorted().collect(Collectors.toList());
         for (String key : keys) {
             signOnText.append(key).append("=").append(signOn.get(key));
         }
-        signOnText.append(AUTH_CLIENT_SECRET);
+        signOnText.append(ClientKeys.AUTH_CLIENT_SECRET);
 
-        signedRequestParameters.put("authAppkey", AUTH_CLIENT_KEY);
-        signedRequestParameters.put("authSign", MD5Util.getMD5Hash(signOnText.toString()));
+        signedRequestParameters.put(RequestQueryParameter.AUTH_APPKEY, ClientKeys.AUTH_CLIENT_KEY);
+        signedRequestParameters.put(RequestQueryParameter.AUTH_SIGN, MD5Util.getMD5Hash(signOnText.toString()));
         return signedRequestParameters;
     }
 
