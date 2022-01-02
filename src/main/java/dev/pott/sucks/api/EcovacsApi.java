@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequest;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequestParameter;
+import dev.pott.sucks.api.dto.request.portal.PortalIotProductRequest;
 import dev.pott.sucks.api.dto.request.portal.PortalLoginRequest;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
 import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jetty.client.HttpClient;
@@ -192,6 +194,39 @@ public final class EcovacsApi {
                 return gson.fromJson(
                         deviceResponse.getContentAsString(),
                         PortalDeviceResponse.class
+                );
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public PortalIotProductResponse getIotProductMap(PortalLoginResponse portalLoginResponse) {
+        try {
+            httpClient.start();
+            PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
+                    configuration.getPortalAUthRequestWith(),
+                    portalLoginResponse.getUserId(),
+                    configuration.getRealm(),
+                    portalLoginResponse.getToken(),
+                    configuration.getDeviceId().substring(0, 8)
+            );
+            PortalIotProductRequest data = new PortalIotProductRequest(deviceRequestData);
+            String json = gson.toJson(data);
+            String url = EcovacsApiUrlFactory.getPortalProductIotMapUrl(configuration.getContinent());
+            Request deviceRequest = httpClient.newRequest(url)
+                    .method(HttpMethod.POST)
+                    .headers(httpFields -> httpFields.add(HttpHeader.CONTENT_TYPE, "application/json"))
+                    .body(new StringRequestContent(json));
+            ContentResponse deviceResponse = deviceRequest.send();
+            httpClient.stop();
+            if (deviceResponse.getStatus() == HttpStatus.OK_200) {
+                return gson.fromJson(
+                        deviceResponse.getContentAsString(),
+                        PortalIotProductResponse.class
                 );
             } else {
                 return null;
