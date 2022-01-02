@@ -24,7 +24,7 @@ public class Main {
         HttpClient httpClient = new HttpClient(new HttpClientTransportDynamic(clientConnector));
         httpClient.setConnectTimeout(60);
         EcovacsApi api = new EcovacsApi(
-                new HttpClient(),
+                httpClient,
                 new GsonBuilder().create(),
                 new EcovacsApiConfiguration(
                         MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())),
