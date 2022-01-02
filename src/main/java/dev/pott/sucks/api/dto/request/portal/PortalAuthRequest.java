@@ -21,15 +21,4 @@ public class PortalAuthRequest {
         this.auth = auth;
     }
 
-    public PortalTodo getTodo() {
-        return todo;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public PortalAuthRequestParameter getAuth() {
-        return auth;
-    }
 }

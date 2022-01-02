@@ -5,7 +5,6 @@ import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
-import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
@@ -35,28 +34,16 @@ public class Main {
                         "EN"
                 )
         );
-        ResponseWrapper<AccessData> accessDataResponse = api.login();
-        if (accessDataResponse != null && accessDataResponse.isSuccess()) {
-            authenticate(api, accessDataResponse.getData());
-        }
-    }
-
-    private static void authenticate(EcovacsApi api, AccessData accessDataResponse) {
-        ResponseWrapper<AuthCode> authCodeResponse = api.getAuthCode(accessDataResponse);
-        if (authCodeResponse != null && authCodeResponse.isSuccess()) {
-            requestDevices(api, accessDataResponse, authCodeResponse.getData());
-        }
-    }
-
-    private static void requestDevices(
-            EcovacsApi api,
-            AccessData accessDataResponse,
-            AuthCode authCodeResponse
-    ) {
-        PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse, accessDataResponse);
-        if (acknowledgementResponse != null) {
-            PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
-            System.out.println(devices);
+        AccessData accessDataResponse = api.login();
+        if (accessDataResponse != null) {
+            AuthCode authCodeResponse = api.getAuthCode(accessDataResponse);
+            if (authCodeResponse != null) {
+                PortalLoginResponse acknowledgementResponse = api.portalLogin(authCodeResponse, accessDataResponse);
+                if (acknowledgementResponse != null) {
+                    PortalDeviceResponse devices = api.getDevices(acknowledgementResponse);
+                    System.out.println(devices);
+                }
+            }
         }
     }
 }

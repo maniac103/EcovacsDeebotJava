@@ -45,39 +45,4 @@ public class PortalLoginRequest {
         this.edition = edition;
     }
 
-    public PortalTodo getTodo() {
-        return todo;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public String getLast() {
-        return last;
-    }
-
-    public String getOrg() {
-        return org;
-    }
-
-    public String getResource() {
-        return resource;
-    }
-
-    public String getRealm() {
-        return realm;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getEdition() {
-        return edition;
-    }
 }

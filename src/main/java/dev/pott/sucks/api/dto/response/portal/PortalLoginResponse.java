@@ -2,13 +2,7 @@ package dev.pott.sucks.api.dto.response.portal;
 
 import com.google.gson.annotations.SerializedName;
 
-public class PortalLoginResponse {
-
-    @SerializedName("todo")
-    private final String todo;
-
-    @SerializedName("result")
-    private final String result;
+public class PortalLoginResponse extends AbstractPortalResponse {
 
     @SerializedName("userId")
     private final String userId;
@@ -23,20 +17,11 @@ public class PortalLoginResponse {
     private final String last;
 
     public PortalLoginResponse(String todo, String result, String userId, String resource, String token, String last) {
-        this.todo = todo;
-        this.result = result;
+        super(todo, result);
         this.userId = userId;
         this.resource = resource;
         this.token = token;
         this.last = last;
-    }
-
-    public String getTodo() {
-        return todo;
-    }
-
-    public String getResult() {
-        return result;
     }
 
     public String getUserId() {
