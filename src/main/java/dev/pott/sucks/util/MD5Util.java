@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException;
 public class MD5Util {
 
     private MD5Util() {
-        //Prevent instantiation of util class
+        // Prevent instantiation of util class
     }
 
     public static String getMD5Hash(String input) {

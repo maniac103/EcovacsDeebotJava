@@ -2,8 +2,8 @@ package dev.pott.sucks.api;
 
 public class ClientKeys {
 
-    private ClientKeys(){
-        //Prevent instantiation
+    private ClientKeys() {
+        // Prevent instantiation
     }
 
     public static final String CLIENT_KEY = "1520391301804";

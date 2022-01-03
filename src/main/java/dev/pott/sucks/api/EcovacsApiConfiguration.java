@@ -8,14 +8,8 @@ public final class EcovacsApiConfiguration {
     private final String country;
     private final String language;
 
-    public EcovacsApiConfiguration(
-            String deviceId,
-            String username,
-            String password,
-            String continent,
-            String country,
-            String language
-    ) {
+    public EcovacsApiConfiguration(String deviceId, String username, String password, String continent, String country,
+            String language) {
         this.deviceId = deviceId;
         this.username = username;
         this.password = password;

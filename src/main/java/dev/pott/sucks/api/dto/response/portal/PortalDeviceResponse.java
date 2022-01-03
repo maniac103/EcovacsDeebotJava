@@ -1,8 +1,8 @@
 package dev.pott.sucks.api.dto.response.portal;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
+
+import com.google.gson.annotations.SerializedName;
 
 public class PortalDeviceResponse extends AbstractPortalResponse {
 
