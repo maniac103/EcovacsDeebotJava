@@ -2,7 +2,10 @@ package dev.pott.sucks.api;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -22,6 +25,8 @@ import dev.pott.sucks.api.dto.request.portal.PortalLoginRequest;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
 import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.Device;
+import dev.pott.sucks.api.dto.response.portal.IotProduct;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
@@ -33,6 +38,7 @@ public final class EcovacsApi {
     private final Gson gson;
     private final EcovacsApiConfiguration configuration;
     private final Map<String, String> meta = new HashMap<>();
+    private PortalLoginResponse loginData;
 
     public EcovacsApi(HttpClient httpClient, Gson gson, EcovacsApiConfiguration configuration) {
         this.httpClient = httpClient;
@@ -48,141 +54,135 @@ public final class EcovacsApi {
         meta.put(RequestQueryParameter.META_DEVICE_TYPE, configuration.getDeviceType());
     }
 
-    public AccessData login() {
-        try {
-            // Generate login Params
-            HashMap<String, String> loginParameters = new HashMap<>();
-            loginParameters.put(RequestQueryParameter.AUTH_ACCOUNT, configuration.getUsername());
-            loginParameters.put(RequestQueryParameter.AUTH_PASSWORD, MD5Util.getMD5Hash(configuration.getPassword()));
-            loginParameters.put(RequestQueryParameter.AUTH_REQUEST_ID,
-                    MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
-            loginParameters.put(RequestQueryParameter.AUTH_TIME_ZONE, configuration.getTimeZone());
-            loginParameters.putAll(meta);
-            HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
+    public void loginAndGetAccessToken() throws EcovacsApiException {
+        loginData = null;
 
-            String loginUrl = EcovacsApiUrlFactory.getLoginUrl(configuration.getCountry(), configuration.getLanguage(),
-                    configuration.getDeviceId(), configuration.getAppCode(), configuration.getAppVersion(),
-                    configuration.getChannel(), configuration.getDeviceType());
-
-            Request loginRequest = httpClient.newRequest(loginUrl).method(HttpMethod.GET);
-            signedRequestParameters.forEach(loginRequest::param);
-            ContentResponse loginResponse = loginRequest.send();
-
-            if (loginResponse.getStatus() == HttpStatus.OK_200) {
-                Type responseType = new TypeToken<ResponseWrapper<AccessData>>() {
-                }.getType();
-                ResponseWrapper<AccessData> response = gson.fromJson(loginResponse.getContentAsString(), responseType);
-                if (response.isSuccess()) {
-                    return response.getData();
-                }
+        AccessData accessData = login();
+        if (accessData != null) {
+            AuthCode authCode = getAuthCode(accessData);
+            if (authCode != null) {
+                loginData = portalLogin(authCode, accessData);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public AuthCode getAuthCode(AccessData accessData) {
-        try {
-            HashMap<String, String> authCodeParameters = new HashMap<>();
-            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_UID, accessData.getUid());
-            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_ACCESS_TOKEN, accessData.getAccessToken());
-            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_BIZ_TYPE, configuration.getBizType());
-            authCodeParameters.put(RequestQueryParameter.AUTH_CODE_DEVICE_ID, configuration.getDeviceId());
-            authCodeParameters.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
-
-            HashMap<String, String> signedRequestParameters = getSignedRequestParameters(authCodeParameters,
-                    ClientKeys.AUTH_CLIENT_KEY, ClientKeys.AUTH_CLIENT_SECRET);
-
-            String authCodeUrl = EcovacsApiUrlFactory.getAuthUrl(configuration.getCountry());
-
-            Request authCodeRequest = httpClient.newRequest(authCodeUrl).method(HttpMethod.GET);
-            signedRequestParameters.forEach(authCodeRequest::param);
-            ContentResponse authCodeResponse = authCodeRequest.send();
-
-            if (authCodeResponse.getStatus() == HttpStatus.OK_200) {
-                Type responseType = new TypeToken<ResponseWrapper<AuthCode>>() {
-                }.getType();
-                ResponseWrapper<AuthCode> response = gson.fromJson(authCodeResponse.getContentAsString(), responseType);
-                if (response.isSuccess()) {
-                    return response.getData();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public PortalLoginResponse portalLogin(AuthCode authCode, AccessData accessData) {
-        try {
-            PortalLoginRequest loginRequestData = new PortalLoginRequest(PortalTodo.LOGIN_BY_TOKEN,
-                    configuration.getCountry(), "", configuration.getOrg(), configuration.getResource(),
-                    configuration.getRealm(), authCode.getAuthCode(), accessData.getUid(), configuration.getEdition());
-            String json = gson.toJson(loginRequestData);
-
-            String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
-            Request loginRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
-                    .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
-            ContentResponse portalLoginResponse = loginRequest.send();
-
-            if (portalLoginResponse.getStatus() == HttpStatus.OK_200) {
-                PortalLoginResponse response = gson.fromJson(portalLoginResponse.getContentAsString(),
-                        PortalLoginResponse.class);
-                if (response.wasSuccessful()) {
-                    return response;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public PortalDeviceResponse getDevices(PortalLoginResponse portalLoginResponse) {
-        try {
-            PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
-                    configuration.getPortalAUthRequestWith(), portalLoginResponse.getUserId(), configuration.getRealm(),
-                    portalLoginResponse.getToken(), configuration.getDeviceId().substring(0, 8)
-
-            );
-            PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, portalLoginResponse.getUserId(),
-                    deviceRequestData);
-            String json = gson.toJson(data);
-            String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
-            Request deviceRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
-                    .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
-            ContentResponse deviceResponse = deviceRequest.send();
-            if (deviceResponse.getStatus() == HttpStatus.OK_200) {
-                return gson.fromJson(deviceResponse.getContentAsString(), PortalDeviceResponse.class);
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 
-    public PortalIotProductResponse getIotProductMap(PortalLoginResponse portalLoginResponse) {
+    public boolean isLoggedIn() {
+        return loginData != null;
+    }
+
+    private AccessData login() throws EcovacsApiException {
+        // Generate login Params
+        HashMap<String, String> loginParameters = new HashMap<>();
+        loginParameters.put(RequestQueryParameter.AUTH_ACCOUNT, configuration.getUsername());
+        loginParameters.put(RequestQueryParameter.AUTH_PASSWORD, MD5Util.getMD5Hash(configuration.getPassword()));
+        loginParameters.put(RequestQueryParameter.AUTH_REQUEST_ID,
+                MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())));
+        loginParameters.put(RequestQueryParameter.AUTH_TIME_ZONE, configuration.getTimeZone());
+        loginParameters.putAll(meta);
+
+        HashMap<String, String> signedRequestParameters = getSignedRequestParameters(loginParameters);
+        String loginUrl = EcovacsApiUrlFactory.getLoginUrl(configuration.getCountry(), configuration.getLanguage(),
+                configuration.getDeviceId(), configuration.getAppCode(), configuration.getAppVersion(),
+                configuration.getChannel(), configuration.getDeviceType());
+        Request loginRequest = httpClient.newRequest(loginUrl).method(HttpMethod.GET);
+        signedRequestParameters.forEach(loginRequest::param);
+
+        ContentResponse loginResponse = executeRequest(loginRequest);
+        Type responseType = new TypeToken<ResponseWrapper<AccessData>>() {
+        }.getType();
+        return handleResponseWrapper(gson.fromJson(loginResponse.getContentAsString(), responseType));
+    }
+
+    private AuthCode getAuthCode(AccessData accessData) throws EcovacsApiException {
+        HashMap<String, String> authCodeParameters = new HashMap<>();
+        authCodeParameters.put(RequestQueryParameter.AUTH_CODE_UID, accessData.getUid());
+        authCodeParameters.put(RequestQueryParameter.AUTH_CODE_ACCESS_TOKEN, accessData.getAccessToken());
+        authCodeParameters.put(RequestQueryParameter.AUTH_CODE_BIZ_TYPE, configuration.getBizType());
+        authCodeParameters.put(RequestQueryParameter.AUTH_CODE_DEVICE_ID, configuration.getDeviceId());
+        authCodeParameters.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
+
+        HashMap<String, String> signedRequestParameters = getSignedRequestParameters(authCodeParameters,
+                ClientKeys.AUTH_CLIENT_KEY, ClientKeys.AUTH_CLIENT_SECRET);
+        String authCodeUrl = EcovacsApiUrlFactory.getAuthUrl(configuration.getCountry());
+        Request authCodeRequest = httpClient.newRequest(authCodeUrl).method(HttpMethod.GET);
+        signedRequestParameters.forEach(authCodeRequest::param);
+
+        ContentResponse authCodeResponse = executeRequest(authCodeRequest);
+        Type responseType = new TypeToken<ResponseWrapper<AuthCode>>() {
+        }.getType();
+        return handleResponseWrapper(gson.fromJson(authCodeResponse.getContentAsString(), responseType));
+    }
+
+    private PortalLoginResponse portalLogin(AuthCode authCode, AccessData accessData) throws EcovacsApiException {
+        PortalLoginRequest loginRequestData = new PortalLoginRequest(PortalTodo.LOGIN_BY_TOKEN,
+                configuration.getCountry(), "", configuration.getOrg(), configuration.getResource(),
+                configuration.getRealm(), authCode.getAuthCode(), accessData.getUid(), configuration.getEdition());
+        String json = gson.toJson(loginRequestData);
+        String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
+        Request loginRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
+                .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
+        ContentResponse portalLoginResponse = executeRequest(loginRequest);
+        PortalLoginResponse response = gson.fromJson(portalLoginResponse.getContentAsString(),
+                PortalLoginResponse.class);
+        if (!response.wasSuccessful()) {
+            throw new EcovacsApiException("Login failed");
+        }
+        return response;
+    }
+
+    public List<Device> getDevices() throws EcovacsApiException {
+        PortalLoginResponse loginData = enforceLoginData();
+        PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
+                configuration.getPortalAUthRequestWith(), loginData.getUserId(), configuration.getRealm(),
+                loginData.getToken(), configuration.getDeviceId().substring(0, 8));
+        PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, loginData.getUserId(),
+                deviceRequestData);
+        String json = gson.toJson(data);
+        String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
+        Request deviceRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
+                .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
+        ContentResponse deviceResponse = executeRequest(deviceRequest);
+        return gson.fromJson(deviceResponse.getContentAsString(), PortalDeviceResponse.class).getDevices();
+    }
+
+    public List<IotProduct> getIotProductMap() throws EcovacsApiException {
+        PortalLoginResponse loginData = enforceLoginData();
+        PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
+                configuration.getPortalAUthRequestWith(), loginData.getUserId(), configuration.getRealm(),
+                loginData.getToken(), configuration.getDeviceId().substring(0, 8));
+        PortalIotProductRequest data = new PortalIotProductRequest(deviceRequestData);
+        String json = gson.toJson(data);
+        String url = EcovacsApiUrlFactory.getPortalProductIotMapUrl(configuration.getContinent());
+        Request deviceRequest = httpClient.newRequest(url).method(HttpMethod.POST)
+                .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
+        ContentResponse deviceResponse = executeRequest(deviceRequest);
+        return gson.fromJson(deviceResponse.getContentAsString(), PortalIotProductResponse.class).getProducts();
+    }
+
+    private PortalLoginResponse enforceLoginData() {
+        PortalLoginResponse loginData = this.loginData;
+        if (loginData == null) {
+            throw new IllegalStateException("Not logged in");
+        }
+        return loginData;
+    }
+
+    private <T> T handleResponseWrapper(ResponseWrapper<T> response) throws EcovacsApiException {
+        if (!response.isSuccess()) {
+            throw new EcovacsApiException("API call failed: " + response.getMessage() + ", code " + response.getCode());
+        }
+        return response.getData();
+    }
+
+    private ContentResponse executeRequest(Request request) throws EcovacsApiException {
         try {
-            PortalAuthRequestParameter deviceRequestData = new PortalAuthRequestParameter(
-                    configuration.getPortalAUthRequestWith(), portalLoginResponse.getUserId(), configuration.getRealm(),
-                    portalLoginResponse.getToken(), configuration.getDeviceId().substring(0, 8));
-            PortalIotProductRequest data = new PortalIotProductRequest(deviceRequestData);
-            String json = gson.toJson(data);
-            String url = EcovacsApiUrlFactory.getPortalProductIotMapUrl(configuration.getContinent());
-            Request deviceRequest = httpClient.newRequest(url).method(HttpMethod.POST)
-                    .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
-            ContentResponse deviceResponse = deviceRequest.send();
-            if (deviceResponse.getStatus() == HttpStatus.OK_200) {
-                return gson.fromJson(deviceResponse.getContentAsString(), PortalIotProductResponse.class);
-            } else {
-                return null;
+            ContentResponse response = request.send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                throw new EcovacsApiException(response);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            return response;
+        } catch (InterruptedException | TimeoutException | ExecutionException e) {
+            throw new EcovacsApiException(e);
         }
     }
 
