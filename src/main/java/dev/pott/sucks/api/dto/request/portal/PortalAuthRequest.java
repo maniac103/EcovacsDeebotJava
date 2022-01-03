@@ -20,5 +20,4 @@ public class PortalAuthRequest {
         this.userId = userId;
         this.auth = auth;
     }
-
 }

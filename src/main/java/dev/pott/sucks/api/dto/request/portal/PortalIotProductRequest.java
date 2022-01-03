@@ -16,5 +16,4 @@ public class PortalIotProductRequest {
     public PortalIotProductRequest(PortalAuthRequestParameter auth) {
         this.auth = auth;
     }
-
 }

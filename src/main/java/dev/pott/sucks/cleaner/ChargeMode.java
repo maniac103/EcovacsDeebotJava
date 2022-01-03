@@ -1,7 +1,5 @@
 package dev.pott.sucks.cleaner;
 
-import java.util.Locale;
-
 public enum ChargeMode {
     RETURN("go"),
     RETURNING("Going"),

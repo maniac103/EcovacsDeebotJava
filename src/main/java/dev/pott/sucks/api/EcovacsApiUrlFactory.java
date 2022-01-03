@@ -1,8 +1,8 @@
 package dev.pott.sucks.api;
 
-import dev.pott.sucks.util.StringPlaceholderUtils;
-
 import java.util.HashMap;
+
+import dev.pott.sucks.util.StringPlaceholderUtils;
 
 public final class EcovacsApiUrlFactory {
 
@@ -28,15 +28,8 @@ public final class EcovacsApiUrlFactory {
     private static final String DEVICE_TYPE_PLACEHOLDER = "{deviceType}";
     private static final String CONTINENT_PLACEHOLDER = "{continent}";
 
-    public static String getLoginUrl(
-            String country,
-            String language,
-            String deviceId,
-            String appCode,
-            String appVersion,
-            String channel,
-            String deviceType
-    ) {
+    public static String getLoginUrl(String country, String language, String deviceId, String appCode,
+            String appVersion, String channel, String deviceType) {
         return getMainUrl(country, language, deviceId, appCode, appVersion, channel, deviceType) + MAIN_URL_LOGIN_PATH;
     }
 
@@ -60,15 +53,8 @@ public final class EcovacsApiUrlFactory {
         return StringPlaceholderUtils.replacePlaceHolders(PORTAL_URL_FORMAT, placeholder);
     }
 
-    private static String getMainUrl(
-            String country,
-            String language,
-            String deviceId,
-            String appCode,
-            String appVersion,
-            String channel,
-            String deviceType
-    ) {
+    private static String getMainUrl(String country, String language, String deviceId, String appCode,
+            String appVersion, String channel, String deviceType) {
         HashMap<String, String> placeholder = new HashMap<>();
         placeholder.put(COUNTRY_PLACEHOLDER, country);
         placeholder.put(LANGUAGE_PLACEHOLDER, language);
@@ -79,5 +65,4 @@ public final class EcovacsApiUrlFactory {
         placeholder.put(DEVICE_TYPE_PLACEHOLDER, deviceType);
         return StringPlaceholderUtils.replacePlaceHolders(MAIN_URL_FORMAT, placeholder);
     }
-
 }

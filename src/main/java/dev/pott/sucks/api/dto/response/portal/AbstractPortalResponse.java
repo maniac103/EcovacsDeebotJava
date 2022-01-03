@@ -18,5 +18,4 @@ public abstract class AbstractPortalResponse {
     public boolean wasSuccessful() {
         return "ok".equals(result);
     }
-
 }

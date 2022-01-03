@@ -13,5 +13,4 @@ public class StringPlaceholderUtils {
         }
         return result;
     }
-
 }

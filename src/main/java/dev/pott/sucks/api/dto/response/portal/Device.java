@@ -27,7 +27,8 @@ public class Device {
     @SerializedName("service")
     private final Service service;
 
-    public Device(String did, String name, String deviceClass, String resource, String nick, String company, long bindTs, Service service) {
+    public Device(String did, String name, String deviceClass, String resource, String nick, String company,
+            long bindTs, Service service) {
         this.did = did;
         this.name = name;
         this.deviceClass = deviceClass;

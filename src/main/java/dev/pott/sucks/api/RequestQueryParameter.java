@@ -3,10 +3,10 @@ package dev.pott.sucks.api;
 public class RequestQueryParameter {
 
     private RequestQueryParameter() {
-        //Prevent instantiation
+        // Prevent instantiation
     }
 
-    //Authentication
+    // Authentication
     public static final String AUTH_TIMESPAN = "authTimespan";
     public static final String AUTH_TIME_ZONE = "authTimeZone";
     public static final String AUTH_APPKEY = "authAppkey";
@@ -20,7 +20,7 @@ public class RequestQueryParameter {
     public static final String AUTH_CODE_BIZ_TYPE = "bizType";
     public static final String AUTH_CODE_DEVICE_ID = "deviceId";
 
-    //Metadata
+    // Metadata
     public static final String META_COUNTRY = "country";
     public static final String META_LANG = "lang";
     public static final String META_DEVICE_ID = "deviceId";
@@ -28,5 +28,4 @@ public class RequestQueryParameter {
     public static final String META_APP_VERSION = "appVersion";
     public static final String META_CHANNEL = "channel";
     public static final String META_DEVICE_TYPE = "deviceType";
-
 }

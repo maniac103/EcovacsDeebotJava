@@ -20,5 +20,4 @@ public class PortalIotProductResponse {
     public List<IotProduct> getProducts() {
         return products;
     }
-
 }

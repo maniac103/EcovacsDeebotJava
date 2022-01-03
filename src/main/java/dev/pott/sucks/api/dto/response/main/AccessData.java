@@ -28,16 +28,8 @@ public class AccessData {
     @SerializedName("ucUid")
     private final String ucUid;
 
-    public AccessData(
-            String uid,
-            String accessToken,
-            String userName,
-            String email,
-            String mobile,
-            boolean isNew,
-            String loginName,
-            String ucUid
-    ) {
+    public AccessData(String uid, String accessToken, String userName, String email, String mobile, boolean isNew,
+            String loginName, String ucUid) {
         this.uid = uid;
         this.accessToken = accessToken;
         this.userName = userName;

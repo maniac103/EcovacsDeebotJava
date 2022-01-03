@@ -51,7 +51,7 @@ public class IotProduct {
         public final SupportFlags supportFlags;
 
         public ProductDefinition(String id, String materialNumber, String name, String icon, String iconUrl,
-                                 String model, String uiLogicId, boolean otaCapable, SupportFlags supportFlags) {
+                String model, String uiLogicId, boolean otaCapable, SupportFlags supportFlags) {
             this.id = id;
             this.materialNumber = materialNumber;
             this.name = name;

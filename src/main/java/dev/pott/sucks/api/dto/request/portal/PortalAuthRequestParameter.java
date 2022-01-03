@@ -26,5 +26,4 @@ public class PortalAuthRequestParameter {
         this.token = token;
         this.resource = resource;
     }
-
 }
