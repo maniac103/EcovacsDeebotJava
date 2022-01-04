@@ -1,16 +1,8 @@
 package dev.pott.sucks.cleaner;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum SuctionPower {
-    NORMAL("standard"),
-    HIGH("strong");
-
-    private final String id;
-
-    SuctionPower(String id) {
-        this.id = id;
-    }
-
-    public String getId() {
-        return id;
-    }
+    @SerializedName("standard") NORMAL,
+    @SerializedName("strong") HIGH;
 }

@@ -1,20 +1,12 @@
 package dev.pott.sucks.cleaner;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum CleanMode {
-    AUTO("auto"),
-    EDGE("border"),
-    SPOT("spot"),
-    SINGLE_ROOM("singleroom"),
-    STOP("stop"),
-    RETURNING("going");
-
-    private final String id;
-
-    CleanMode(String id) {
-        this.id = id;
-    }
-
-    public String getId() {
-        return id;
-    }
+    @SerializedName("auto") AUTO,
+    @SerializedName("border") EDGE,
+    @SerializedName("spot") SPOT,
+    @SerializedName("SpotArea") SPOT_AREA,
+    @SerializedName("singleroom") SINGLE_ROOM,
+    @SerializedName("stop") STOP;
 }

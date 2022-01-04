@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.EcovacsApiException;
+import dev.pott.sucks.api.dto.request.commands.GetFirmwareVersionCommand;
 import dev.pott.sucks.api.dto.response.portal.Device;
 import dev.pott.sucks.api.dto.response.portal.IotProduct;
 import dev.pott.sucks.util.MD5Util;
@@ -44,6 +45,7 @@ public class Main {
                 } else {
                     System.out.println(
                             "Device " + dev.getName() + " is a " + matchingProducts.get(0).getDefinition().name);
+                    System.out.println(api.sendIotCommand(dev, new GetFirmwareVersionCommand()));
                 }
             }
         } catch (EcovacsApiException e) {
