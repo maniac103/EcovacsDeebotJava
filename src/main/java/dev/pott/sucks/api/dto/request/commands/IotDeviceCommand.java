@@ -40,7 +40,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
 
     public String getPayload(Gson gson, boolean asXml) {
         if (asXml) {
-            return String.format("<ctl td=\"{}\" />", xmlCommandName);
+            return String.format("<ctl td=\"%s\" />", xmlCommandName);
         }
 
         // JSON
