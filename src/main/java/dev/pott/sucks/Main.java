@@ -1,8 +1,5 @@
 package dev.pott.sucks;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
@@ -12,6 +9,9 @@ import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.EcovacsApiException;
 import dev.pott.sucks.api.EcovacsDevice;
+import dev.pott.sucks.api.dto.request.commands.GetBatteryInfoCommand;
+import dev.pott.sucks.api.dto.request.commands.GetChargeStateCommand;
+import dev.pott.sucks.api.dto.request.commands.GetCleanStateCommand;
 import dev.pott.sucks.util.MD5Util;
 
 public class Main {
@@ -33,6 +33,9 @@ public class Main {
             api.loginAndGetAccessToken();
             for (EcovacsDevice device : api.getDevices()) {
                 System.out.println("Device " + device.getSerialNumber() + " is a " + device.getModelName() + ", FW " + device.getFirmwareVersion());
+                System.out.println(device.sendCommand(new GetChargeStateCommand()));
+                System.out.println(device.sendCommand(new GetBatteryInfoCommand()));
+                System.out.println(device.sendCommand(new GetCleanStateCommand()));
             }
         } catch (EcovacsApiException e) {
             System.out.println("API failure:");

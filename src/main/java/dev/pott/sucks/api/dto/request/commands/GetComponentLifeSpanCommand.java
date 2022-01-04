@@ -4,6 +4,10 @@ import com.google.gson.Gson;
 
 import org.w3c.dom.Node;
 
+import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
+
 public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
     public enum Type {
         BRUSH("Brush"),
@@ -20,18 +24,25 @@ public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
     private final Type type;
 
     public GetComponentLifeSpanCommand(Type type) {
-        super("GetLifeSpan");
+        super("GetLifeSpan", "getLifeSpan");
         this.type = type;
     }
 
     @Override
-    public String getPayloadXml() {
+    public String getPayload(Gson gson, boolean asXml) {
+        // FIXME
         return "<ctl td=\"GetLifeSpan\" type=\"" + type.value + "\" />";
     }
 
     @Override
-    public Integer convertResponse(String responsePayload, Gson gson) throws Exception {
-        Node valueAttr = getFirstXPathMatch(responsePayload, "//ctl/@val");
-        return Integer.valueOf(valueAttr.getNodeValue());
+    public Integer convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
+        if (response instanceof PortalIotCommandJsonResponse) {
+            // FIXME
+            return null;
+        } else {
+            String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
+            Node valueAttr = getFirstXPathMatch(payload, "//ctl/@val");
+            return Integer.valueOf(valueAttr.getNodeValue());
+        }
     }
 }

@@ -1,5 +1,7 @@
 package dev.pott.sucks.api.dto.response.portal;
 
+import java.util.Set;
+
 import com.google.gson.annotations.SerializedName;
 
 public class Device {
@@ -70,4 +72,16 @@ public class Device {
     public Service getService() {
         return service;
     }
+
+    public boolean usesMqtt() {
+        return "eco-ng".equals(company);
+    }
+
+    public boolean usesJsonApi() {
+        return DEVICE_CLASSES_USING_JSON_API.contains(deviceClass);
+    }
+
+    private static Set<String> DEVICE_CLASSES_USING_JSON_API = Set.of(
+        "yna5xi" /* Deebot 950 */, "h18jkh" /* Deebot T8 */, "fqxoiu" /* Deebot T8+ */, "ipzjy0" /* Deebot U2 */
+    );
 }

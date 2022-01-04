@@ -1,13 +1,12 @@
 package dev.pott.sucks.api.dto.response.portal;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
-public class PortalIotCommandResponse {
+public class AbstractPortalIotCommandResponse {
     @SerializedName("id")
     private final String id;
-
-    @SerializedName("resp")
-    private final String response;
 
     @SerializedName("ret")
     private final String result;
@@ -15,10 +14,9 @@ public class PortalIotCommandResponse {
     @SerializedName("debug")
     private final String failureMessage;
 
-    public PortalIotCommandResponse(String id, String result, String response, String failureMessage) {
+    public AbstractPortalIotCommandResponse(String id, String result, String failureMessage) {
         this.id = id;
         this.result = result;
-        this.response = response;
         this.failureMessage = failureMessage;
     }
 
@@ -28,9 +26,5 @@ public class PortalIotCommandResponse {
 
     public String getFailureMessage() {
         return failureMessage;
-    }
-
-    public String getResponsePayload() {
-        return response;
     }
 }

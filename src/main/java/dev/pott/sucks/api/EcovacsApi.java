@@ -29,10 +29,12 @@ import dev.pott.sucks.api.dto.request.portal.PortalLoginRequest;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
 import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.dto.response.portal.Device;
 import dev.pott.sucks.api.dto.response.portal.IotProduct;
 import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
+import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
@@ -174,20 +176,23 @@ public final class EcovacsApi {
     }
 
     public <T> T sendIotCommand(Device device, IotDeviceCommand<T> command) throws EcovacsApiException {
+        boolean useJson = device.usesJsonApi() && !command.forceXmlFormat();
         PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(),
-                command.getName(), command.getPayloadXml(),
-                device.getDid(), device.getResource(), device.getDeviceClass());
+                command.getName(!useJson), command.getPayload(gson, !useJson),
+                device.getDid(), device.getResource(), device.getDeviceClass(), useJson);
         String json = gson.toJson(data);
         String url = EcovacsApiUrlFactory.getPortalIotDeviceManagerUrl(configuration.getContinent());
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse response = executeRequest(request);
-        PortalIotCommandResponse commandResponse = gson.fromJson(response.getContentAsString(), PortalIotCommandResponse.class);
+        System.out.println(response.getContentAsString());
+        AbstractPortalIotCommandResponse commandResponse = gson.fromJson(response.getContentAsString(),
+                useJson ? PortalIotCommandJsonResponse.class : PortalIotCommandXmlResponse.class);
         if (!commandResponse.wasSuccessful()) {
-            throw new EcovacsApiException("Sending IOT command " + command.getName() + " failed: " + commandResponse.getFailureMessage());
+            throw new EcovacsApiException("Sending IOT command " + command.getName(!useJson) + " failed: " + commandResponse.getFailureMessage());
         }
         try {
-            return command.convertResponse(commandResponse.getResponsePayload(), gson);
+            return command.convertResponse(commandResponse, gson);
         } catch (Exception e) {
             throw new EcovacsApiException(e);
         }

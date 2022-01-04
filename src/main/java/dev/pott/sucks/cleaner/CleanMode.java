@@ -6,7 +6,11 @@ public enum CleanMode {
     @SerializedName("auto") AUTO,
     @SerializedName("border") EDGE,
     @SerializedName("spot") SPOT,
-    @SerializedName("SpotArea") SPOT_AREA,
+    @SerializedName(value = "SpotArea", alternate = { "spotArea" }) SPOT_AREA,
+    @SerializedName("customArea") CUSTOM_AREA,
     @SerializedName("singleroom") SINGLE_ROOM,
-    @SerializedName("stop") STOP;
+    @SerializedName("pause") PAUSE,
+    @SerializedName("stop") STOP,
+    @SerializedName(value = "going", alternate = { "goCharging"}) RETURNING,
+    @SerializedName("idle") IDLE
 }
