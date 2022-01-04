@@ -1,9 +1,7 @@
 package dev.pott.sucks.api.dto.request.commands;
 
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -12,12 +10,12 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 
@@ -59,9 +57,10 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return null;
     }
 
-    public abstract RESPONSETYPE convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception;    
+    public abstract RESPONSETYPE convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception;
 
-    protected Node getFirstXPathMatch(String xml, String xpathExpression) throws XPathExpressionException, NoSuchElementException {
+    protected Node getFirstXPathMatch(String xml, String xpathExpression)
+            throws XPathExpressionException, NoSuchElementException {
         InputSource inputXML = new InputSource(new StringReader(xml));
         XPath xPath = XPathFactory.newInstance().newXPath();
         NodeList nodes = (NodeList) xPath.evaluate(xpathExpression, inputXML, XPathConstants.NODESET);
@@ -72,10 +71,14 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
     }
 
     private static class JsonPayloadHeader {
-        @SerializedName("pri") public final int pri = 1;
-        @SerializedName("ts") public final long timestamp;
-        @SerializedName("tzm") public final int tzm = 480;
-        @SerializedName("ver") public final String version = "0.0.50";
+        @SerializedName("pri")
+        public final int pri = 1;
+        @SerializedName("ts")
+        public final long timestamp;
+        @SerializedName("tzm")
+        public final int tzm = 480;
+        @SerializedName("ver")
+        public final String version = "0.0.50";
 
         public JsonPayloadHeader() {
             timestamp = System.currentTimeMillis();
@@ -83,13 +86,18 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
     }
 
     protected static class JsonResponsePayloadWrapper<T> {
-        @SerializedName("header") public JsonPayloadHeader header;
-        @SerializedName("body") public JsonResponsePayloadBody<T> body;
+        @SerializedName("header")
+        public JsonPayloadHeader header;
+        @SerializedName("body")
+        public JsonResponsePayloadBody<T> body;
     }
 
     protected static class JsonResponsePayloadBody<T> {
-        @SerializedName("code") public int code;
-        @SerializedName("msg") public String message;
-        @SerializedName("data") public T payload;
+        @SerializedName("code")
+        public int code;
+        @SerializedName("msg")
+        public String message;
+        @SerializedName("data")
+        public T payload;
     }
 }

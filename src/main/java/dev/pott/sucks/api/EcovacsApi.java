@@ -150,8 +150,7 @@ public final class EcovacsApi {
         List<EcovacsDevice> devices = new ArrayList<>();
         for (Device dev : getDeviceList()) {
             Optional<IotProduct> product = products.stream()
-                    .filter(prod -> dev.getDeviceClass().equals(prod.getClassId()))
-                    .findFirst();
+                    .filter(prod -> dev.getDeviceClass().equals(prod.getClassId())).findFirst();
             if (!product.isPresent()) {
                 // FIXME: throw instead?
                 continue;
@@ -166,7 +165,8 @@ public final class EcovacsApi {
     }
 
     private List<Device> getDeviceList() throws EcovacsApiException {
-        PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, loginData.getUserId(), createAuthData());
+        PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, loginData.getUserId(),
+                createAuthData());
         String json = gson.toJson(data);
         String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
         Request deviceRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
@@ -187,9 +187,9 @@ public final class EcovacsApi {
 
     public <T> T sendIotCommand(Device device, IotDeviceCommand<T> command) throws EcovacsApiException {
         boolean useJson = device.usesJsonApi() && !command.forceXmlFormat();
-        PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(),
-                command.getName(!useJson), command.getPayload(gson, !useJson),
-                device.getDid(), device.getResource(), device.getDeviceClass(), useJson);
+        PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(), command.getName(!useJson),
+                command.getPayload(gson, !useJson), device.getDid(), device.getResource(), device.getDeviceClass(),
+                useJson);
         String json = gson.toJson(data);
         String url = EcovacsApiUrlFactory.getPortalIotDeviceManagerUrl(configuration.getContinent());
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)
@@ -198,7 +198,8 @@ public final class EcovacsApi {
         AbstractPortalIotCommandResponse commandResponse = gson.fromJson(response.getContentAsString(),
                 useJson ? PortalIotCommandJsonResponse.class : PortalIotCommandXmlResponse.class);
         if (!commandResponse.wasSuccessful()) {
-            throw new EcovacsApiException("Sending IOT command " + command.getName(!useJson) + " failed: " + commandResponse.getFailureMessage());
+            throw new EcovacsApiException("Sending IOT command " + command.getName(!useJson) + " failed: "
+                    + commandResponse.getFailureMessage());
         }
         try {
             return command.convertResponse(commandResponse, gson);
@@ -212,9 +213,8 @@ public final class EcovacsApi {
         if (loginData == null) {
             throw new IllegalStateException("Not logged in");
         }
-        return new PortalAuthRequestParameter(
-                configuration.getPortalAUthRequestWith(), loginData.getUserId(), configuration.getRealm(),
-                loginData.getToken(), configuration.getDeviceId().substring(0, 8));
+        return new PortalAuthRequestParameter(configuration.getPortalAUthRequestWith(), loginData.getUserId(),
+                configuration.getRealm(), loginData.getToken(), configuration.getDeviceId().substring(0, 8));
     }
 
     private <T> T handleResponseWrapper(ResponseWrapper<T> response) throws EcovacsApiException {

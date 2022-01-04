@@ -81,7 +81,7 @@ public class Device {
         return DEVICE_CLASSES_USING_JSON_API.contains(deviceClass);
     }
 
-    private static Set<String> DEVICE_CLASSES_USING_JSON_API = Set.of(
-        "yna5xi" /* Deebot 950 */, "h18jkh" /* Deebot T8 */, "fqxoiu" /* Deebot T8+ */, "ipzjy0" /* Deebot U2 */
+    private static Set<String> DEVICE_CLASSES_USING_JSON_API = Set.of("yna5xi" /* Deebot 950 */,
+            "h18jkh" /* Deebot T8 */, "fqxoiu" /* Deebot T8+ */, "ipzjy0" /* Deebot U2 */
     );
 }

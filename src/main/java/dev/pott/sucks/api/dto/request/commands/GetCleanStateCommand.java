@@ -19,8 +19,10 @@ public class GetCleanStateCommand extends IotDeviceCommand<CleanMode> {
     @Override
     public CleanMode convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         if (response instanceof PortalIotCommandJsonResponse) {
-            Type type = new TypeToken<JsonResponsePayloadWrapper<JsonResponse>>(){}.getType();
-            JsonResponsePayloadWrapper<JsonResponse> wrapper = ((PortalIotCommandJsonResponse) response).getResponsePayloadAs(gson, type);
+            Type type = new TypeToken<JsonResponsePayloadWrapper<JsonResponse>>() {
+            }.getType();
+            JsonResponsePayloadWrapper<JsonResponse> wrapper = ((PortalIotCommandJsonResponse) response)
+                    .getResponsePayloadAs(gson, type);
             return wrapper.body.payload.state;
         } else {
             String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
@@ -30,7 +32,9 @@ public class GetCleanStateCommand extends IotDeviceCommand<CleanMode> {
     }
 
     private static class JsonResponse {
-        @SerializedName("trigger") public String trigger;
-        @SerializedName("state") public CleanMode state;
+        @SerializedName("trigger")
+        public String trigger;
+        @SerializedName("state")
+        public CleanMode state;
     }
 }

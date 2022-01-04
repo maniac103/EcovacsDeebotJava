@@ -46,7 +46,7 @@ public class PlaySoundCommand extends IotDeviceCommand<Void> {
             this.id = id;
         }
     }
-    
+
     private final int soundId;
 
     public PlaySoundCommand(SoundType type) {

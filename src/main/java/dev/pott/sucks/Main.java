@@ -33,14 +33,18 @@ public class Main {
             public void onBatteryLevelChanged(EcovacsDevice device, int newLevelPercent) {
                 System.out.println(device.getSerialNumber() + ": Battery changed to " + newLevelPercent + "%");
             }
+
             @Override
             public void onChargingStateChanged(EcovacsDevice device, boolean charging) {
-                System.out.println(device.getSerialNumber() + ": Battery " + (charging ? "now" : "no longer") + " charging");
+                System.out.println(
+                        device.getSerialNumber() + ": Battery " + (charging ? "now" : "no longer") + " charging");
             }
+
             @Override
             public void onCleaningModeChanged(EcovacsDevice device, CleanMode newMode) {
                 System.out.println(device.getSerialNumber() + ": Mode changed to " + newMode);
             }
+
             @Override
             public void onCleaningPowerChanged(EcovacsDevice device, SuctionPower newPower) {
                 System.out.println(device.getSerialNumber() + ": Power changed to " + newPower);
@@ -49,7 +53,8 @@ public class Main {
         try {
             api.loginAndGetAccessToken();
             for (EcovacsDevice device : api.getDevices()) {
-                System.out.println("Device " + device.getSerialNumber() + " is a " + device.getModelName() + ", FW " + device.getFirmwareVersion());
+                System.out.println("Device " + device.getSerialNumber() + " is a " + device.getModelName() + ", FW "
+                        + device.getFirmwareVersion());
                 device.connect(listener);
             }
         } catch (EcovacsApiException e) {

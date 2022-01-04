@@ -1,7 +1,5 @@
 package dev.pott.sucks.api.dto.response.portal;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 public class AbstractPortalIotCommandResponse {

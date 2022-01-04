@@ -23,6 +23,6 @@ public class GetFirmwareVersionCommand extends IotDeviceCommand<String> {
     @Override
     public String convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
-        return getFirstXPathMatch(payload,  "//ver[@name='FW']").getTextContent();
+        return getFirstXPathMatch(payload, "//ver[@name='FW']").getTextContent();
     }
 }

@@ -6,7 +6,7 @@ public class PortalIotCommandRequest {
 
     @SerializedName("auth")
     private final PortalAuthRequestParameter auth;
-    
+
     @SerializedName("cmdName")
     private final String commandName;
 

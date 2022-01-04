@@ -1,8 +1,8 @@
 package dev.pott.sucks.api.dto.request.commands;
 
-import com.google.gson.Gson;
-
 import org.w3c.dom.Node;
+
+import com.google.gson.Gson;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
