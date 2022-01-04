@@ -11,9 +11,7 @@ import com.google.gson.GsonBuilder;
 import dev.pott.sucks.api.EcovacsApi;
 import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.EcovacsApiException;
-import dev.pott.sucks.api.dto.request.commands.GetFirmwareVersionCommand;
-import dev.pott.sucks.api.dto.response.portal.Device;
-import dev.pott.sucks.api.dto.response.portal.IotProduct;
+import dev.pott.sucks.api.EcovacsDevice;
 import dev.pott.sucks.util.MD5Util;
 
 public class Main {
@@ -33,20 +31,8 @@ public class Main {
                 MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis())), "user", "password", "EU", "DE", "EN"));
         try {
             api.loginAndGetAccessToken();
-            List<Device> devices = api.getDevices();
-            List<IotProduct> products = api.getIotProductMap();
-
-            System.out.println("Found " + devices.size() + " devices, " + products.size() + " products");
-            for (Device dev : devices) {
-                List<IotProduct> matchingProducts = products.stream()
-                        .filter(prod -> dev.getDeviceClass().equals(prod.getClassId())).collect(Collectors.toList());
-                if (matchingProducts.isEmpty()) {
-                    System.out.println("Did not find device class for " + dev.getName());
-                } else {
-                    System.out.println(
-                            "Device " + dev.getName() + " is a " + matchingProducts.get(0).getDefinition().name);
-                    System.out.println(api.sendIotCommand(dev, new GetFirmwareVersionCommand()));
-                }
+            for (EcovacsDevice device : api.getDevices()) {
+                System.out.println("Device " + device.getSerialNumber() + " is a " + device.getModelName() + ", FW " + device.getFirmwareVersion());
             }
         } catch (EcovacsApiException e) {
             System.out.println("API failure:");

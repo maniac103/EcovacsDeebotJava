@@ -1,9 +1,11 @@
 package dev.pott.sucks.api;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -133,7 +135,25 @@ public final class EcovacsApi {
         return response;
     }
 
-    public List<Device> getDevices() throws EcovacsApiException {
+    public List<EcovacsDevice> getDevices() throws EcovacsApiException {
+        List<IotProduct> products = getIotProductMap();
+        List<EcovacsDevice> devices = new ArrayList<>();
+        for (Device dev : getDeviceList()) {
+            Optional<IotProduct> product = products.stream()
+                    .filter(prod -> dev.getDeviceClass().equals(prod.getClassId()))
+                    .findFirst();
+            if (!product.isPresent()) {
+                // FIXME: throw instead?
+                continue;
+            }
+            if (dev.getCompany().equals("eco-ng")) {
+                devices.add(new EcovacsIotMqDevice(dev, product.get().getDefinition(), this));
+            }
+        }
+        return devices;
+    }
+
+    private List<Device> getDeviceList() throws EcovacsApiException {
         PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, loginData.getUserId(), createAuthData());
         String json = gson.toJson(data);
         String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
@@ -143,7 +163,7 @@ public final class EcovacsApi {
         return gson.fromJson(deviceResponse.getContentAsString(), PortalDeviceResponse.class).getDevices();
     }
 
-    public List<IotProduct> getIotProductMap() throws EcovacsApiException {
+    private List<IotProduct> getIotProductMap() throws EcovacsApiException {
         PortalIotProductRequest data = new PortalIotProductRequest(createAuthData());
         String json = gson.toJson(data);
         String url = EcovacsApiUrlFactory.getPortalProductIotMapUrl(configuration.getContinent());
