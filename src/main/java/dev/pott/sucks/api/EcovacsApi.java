@@ -77,6 +77,14 @@ public final class EcovacsApi {
         return loginData != null;
     }
 
+    EcovacsApiConfiguration getConfig() {
+        return configuration;
+    }
+
+    PortalLoginResponse getLoginData() {
+        return loginData;
+    }
+
     private AccessData login() throws EcovacsApiException {
         // Generate login Params
         HashMap<String, String> loginParameters = new HashMap<>();
@@ -149,7 +157,9 @@ public final class EcovacsApi {
                 continue;
             }
             if (dev.getCompany().equals("eco-ng")) {
-                devices.add(new EcovacsIotMqDevice(dev, product.get().getDefinition(), this));
+                devices.add(new EcovacsIotMqDevice(dev, product.get().getDefinition(), this, gson));
+            } else {
+                // TODO: XMPP device
             }
         }
         return devices;
@@ -185,7 +195,6 @@ public final class EcovacsApi {
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse response = executeRequest(request);
-        System.out.println(response.getContentAsString());
         AbstractPortalIotCommandResponse commandResponse = gson.fromJson(response.getContentAsString(),
                 useJson ? PortalIotCommandJsonResponse.class : PortalIotCommandXmlResponse.class);
         if (!commandResponse.wasSuccessful()) {

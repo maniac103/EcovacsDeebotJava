@@ -4,5 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 public enum SuctionPower {
     @SerializedName("standard") NORMAL,
-    @SerializedName("strong") HIGH;
+    @SerializedName("strong") HIGH,
+    HIGHER
 }
