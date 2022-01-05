@@ -15,8 +15,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 
+import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public abstract class IotDeviceCommand<RESPONSETYPE> {
@@ -68,36 +68,5 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
             throw new NoSuchElementException();
         }
         return nodes.item(0);
-    }
-
-    private static class JsonPayloadHeader {
-        @SerializedName("pri")
-        public final int pri = 1;
-        @SerializedName("ts")
-        public final long timestamp;
-        @SerializedName("tzm")
-        public final int tzm = 480;
-        @SerializedName("ver")
-        public final String version = "0.0.50";
-
-        public JsonPayloadHeader() {
-            timestamp = System.currentTimeMillis();
-        }
-    }
-
-    protected static class JsonResponsePayloadWrapper<T> {
-        @SerializedName("header")
-        public JsonPayloadHeader header;
-        @SerializedName("body")
-        public JsonResponsePayloadBody<T> body;
-    }
-
-    protected static class JsonResponsePayloadBody<T> {
-        @SerializedName("code")
-        public int code;
-        @SerializedName("msg")
-        public String message;
-        @SerializedName("data")
-        public T payload;
     }
 }

@@ -1,6 +1,6 @@
 package dev.pott.sucks.api.dto.response.portal;
 
-import java.lang.reflect.Type;
+import org.eclipse.jdt.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -15,7 +15,46 @@ public class PortalIotCommandJsonResponse extends AbstractPortalIotCommandRespon
         this.response = response;
     }
 
-    public <T> T getResponsePayloadAs(Gson gson, Type type) {
-        return gson.fromJson(response, type);
+    public <T> T getResponsePayloadAs(Gson gson, Class<T> clazz) {
+        @Nullable
+        JsonResponsePayloadWrapper wrapper = gson.fromJson(response, JsonResponsePayloadWrapper.class);
+        if (wrapper == null) {
+            throw new NullPointerException();
+        }
+        @Nullable
+        T payload = gson.fromJson(wrapper.body.payload, clazz);
+        if (payload == null) {
+            throw new NullPointerException();
+        }
+        return payload;
+    }
+
+    public static class JsonPayloadHeader {
+        @SerializedName("pri")
+        public int pri;
+        @SerializedName("ts")
+        public long timestamp;
+        @SerializedName("tzm")
+        public int tzm;
+        @SerializedName("fwVer")
+        public String firmwareVersion;
+        @SerializedName("hwVer")
+        public String hardwareVersion;
+    }
+
+    public static class JsonResponsePayloadWrapper {
+        @SerializedName("header")
+        public JsonPayloadHeader header;
+        @SerializedName("body")
+        public JsonResponsePayloadBody body;
+    }
+
+    public static class JsonResponsePayloadBody {
+        @SerializedName("code")
+        public int code;
+        @SerializedName("msg")
+        public String message;
+        @SerializedName("data")
+        public JsonElement payload;
     }
 }

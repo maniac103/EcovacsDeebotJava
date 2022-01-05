@@ -1,9 +1,12 @@
 package dev.pott.sucks.api;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 import dev.pott.sucks.api.dto.request.commands.IotDeviceCommand;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.SuctionPower;
 
+@NonNullByDefault
 public interface EcovacsDevice {
     public interface StateChangeListener {
         void onBatteryLevelChanged(EcovacsDevice device, int newLevelPercent);

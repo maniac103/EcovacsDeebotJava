@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -39,13 +41,14 @@ import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.util.MD5Util;
 
+@NonNullByDefault
 public final class EcovacsApi {
 
     private final HttpClient httpClient;
     private final Gson gson;
     private final EcovacsApiConfiguration configuration;
     private final Map<String, String> meta = new HashMap<>();
-    private PortalLoginResponse loginData;
+    private @Nullable PortalLoginResponse loginData;
 
     public EcovacsApi(HttpClient httpClient, Gson gson, EcovacsApiConfiguration configuration) {
         this.httpClient = httpClient;
@@ -65,12 +68,8 @@ public final class EcovacsApi {
         loginData = null;
 
         AccessData accessData = login();
-        if (accessData != null) {
-            AuthCode authCode = getAuthCode(accessData);
-            if (authCode != null) {
-                loginData = portalLogin(authCode, accessData);
-            }
-        }
+        AuthCode authCode = getAuthCode(accessData);
+        loginData = portalLogin(authCode, accessData);
     }
 
     public boolean isLoggedIn() {
@@ -81,6 +80,7 @@ public final class EcovacsApi {
         return configuration;
     }
 
+    @Nullable
     PortalLoginResponse getLoginData() {
         return loginData;
     }
@@ -137,8 +137,7 @@ public final class EcovacsApi {
         Request loginRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse portalLoginResponse = executeRequest(loginRequest);
-        PortalLoginResponse response = gson.fromJson(portalLoginResponse.getContentAsString(),
-                PortalLoginResponse.class);
+        PortalLoginResponse response = handleResponse(portalLoginResponse, PortalLoginResponse.class);
         if (!response.wasSuccessful()) {
             throw new EcovacsApiException("Login failed");
         }
@@ -165,14 +164,13 @@ public final class EcovacsApi {
     }
 
     private List<Device> getDeviceList() throws EcovacsApiException {
-        PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, loginData.getUserId(),
-                createAuthData());
+        PortalAuthRequest data = new PortalAuthRequest(PortalTodo.GET_DEVICE_LIST, createAuthData());
         String json = gson.toJson(data);
         String userUrl = EcovacsApiUrlFactory.getPortalUsersUrl(configuration.getContinent());
         Request deviceRequest = httpClient.newRequest(userUrl).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse deviceResponse = executeRequest(deviceRequest);
-        return gson.fromJson(deviceResponse.getContentAsString(), PortalDeviceResponse.class).getDevices();
+        return handleResponse(deviceResponse, PortalDeviceResponse.class).getDevices();
     }
 
     private List<IotProduct> getIotProductMap() throws EcovacsApiException {
@@ -182,7 +180,7 @@ public final class EcovacsApi {
         Request deviceRequest = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse deviceResponse = executeRequest(deviceRequest);
-        return gson.fromJson(deviceResponse.getContentAsString(), PortalIotProductResponse.class).getProducts();
+        return handleResponse(deviceResponse, PortalIotProductResponse.class).getProducts();
     }
 
     public <T> T sendIotCommand(Device device, IotDeviceCommand<T> command) throws EcovacsApiException {
@@ -195,8 +193,12 @@ public final class EcovacsApi {
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse response = executeRequest(request);
-        AbstractPortalIotCommandResponse commandResponse = gson.fromJson(response.getContentAsString(),
-                useJson ? PortalIotCommandJsonResponse.class : PortalIotCommandXmlResponse.class);
+        final AbstractPortalIotCommandResponse commandResponse;
+        if (useJson) {
+            commandResponse = handleResponse(response, PortalIotCommandJsonResponse.class);
+        } else {
+            commandResponse = handleResponse(response, PortalIotCommandXmlResponse.class);
+        }
         if (!commandResponse.wasSuccessful()) {
             throw new EcovacsApiException("Sending IOT command " + command.getName(!useJson) + " failed: "
                     + commandResponse.getFailureMessage());
@@ -217,11 +219,25 @@ public final class EcovacsApi {
                 configuration.getRealm(), loginData.getToken(), configuration.getDeviceId().substring(0, 8));
     }
 
-    private <T> T handleResponseWrapper(ResponseWrapper<T> response) throws EcovacsApiException {
+    private <T> T handleResponseWrapper(@Nullable ResponseWrapper<T> response) throws EcovacsApiException {
+        if (response == null) {
+            // should not happen in practice
+            throw new EcovacsApiException("No response received");
+        }
         if (!response.isSuccess()) {
             throw new EcovacsApiException("API call failed: " + response.getMessage() + ", code " + response.getCode());
         }
         return response.getData();
+    }
+
+    private <T> T handleResponse(ContentResponse response, Class<T> clazz) throws EcovacsApiException {
+        @Nullable
+        T respObject = gson.fromJson(response.getContentAsString(), clazz);
+        if (respObject == null) {
+            // should not happen in practice
+            throw new EcovacsApiException("No response received");
+        }
+        return respObject;
     }
 
     private ContentResponse executeRequest(Request request) throws EcovacsApiException {

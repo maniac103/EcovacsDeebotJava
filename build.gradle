@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    compile 'org.eclipse.jdt:org.eclipse.jdt.annotation:2.2.600'
     compile 'org.eclipse.jetty:jetty-client:9.4.40.v20210413'
     compile 'com.google.code.gson:gson:2.8.9'
     compile 'com.hivemq:hivemq-mqtt-client:1.2.2'
