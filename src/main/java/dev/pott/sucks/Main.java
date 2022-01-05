@@ -49,6 +49,19 @@ public class Main {
             public void onCleaningPowerChanged(EcovacsDevice device, SuctionPower newPower) {
                 System.out.println(device.getSerialNumber() + ": Power changed to " + newPower);
             }
+
+            @Override
+            public void onCleaningStatsChanged(EcovacsDevice device, int cleanedArea, int cleaningTimeSeconds) {
+                System.out.println(
+                        device.getSerialNumber() + ": Cleaned " + cleanedArea + " m² in " + cleaningTimeSeconds + "s");
+            }
+
+            @Override
+            public void onDeviceConnectionFailed(EcovacsDevice device, Throwable error) {
+                System.out.println(device.getSerialNumber() + ": Connection failed");
+                error.printStackTrace();
+                System.exit(1);
+            }
         };
         try {
             api.loginAndGetAccessToken();

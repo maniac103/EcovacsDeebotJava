@@ -16,6 +16,10 @@ public interface EcovacsDevice {
         void onCleaningModeChanged(EcovacsDevice device, CleanMode newMode);
 
         void onCleaningPowerChanged(EcovacsDevice device, SuctionPower newPower);
+
+        void onCleaningStatsChanged(EcovacsDevice device, int cleanedArea, int cleaningTimeSeconds);
+
+        void onDeviceConnectionFailed(EcovacsDevice device, Throwable error);
     }
 
     public String getId();

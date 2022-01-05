@@ -7,5 +7,19 @@ public enum SuctionPower {
     NORMAL,
     @SerializedName("strong")
     HIGH,
-    HIGHER
+    HIGHER,
+    SILENT;
+
+    public static SuctionPower fromJsonValue(int value) {
+        switch (value) {
+            case 1000:
+                return SILENT;
+            case 1:
+                return HIGH;
+            case 2:
+                return HIGHER;
+            default:
+                return NORMAL;
+        }
+    }
 }

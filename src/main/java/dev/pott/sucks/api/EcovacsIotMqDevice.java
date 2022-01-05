@@ -118,7 +118,11 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                     device.getResource());
             mqttClient.subscribeWith().topicFilter(topic).callback(publish -> {
                 String payload = new String(publish.getPayloadAsBytes());
-                messageHandler.handleMessage(publish.getTopic().toString(), payload);
+                try {
+                    messageHandler.handleMessage(publish.getTopic().toString(), payload);
+                } catch (Exception e) {
+                    handleMqttError(e);
+                }
             }).send().whenComplete((subAck, subError) -> {
                 if (subError != null) {
                     handleMqttError(subError);
@@ -136,7 +140,9 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     }
 
     private void handleMqttError(Throwable t) {
-        // TODO: retry?
+        if (listener != null) {
+            listener.onDeviceConnectionFailed(this, t);
+        }
     }
 
     private TrustManagerFactory createTrustManagerFactory() {
@@ -192,6 +198,12 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         }
     }
 
+    private void handleStatsUpdate(int area, int cleaningTimeInSeconds) {
+        if (listener != null) {
+            listener.onCleaningStatsChanged(this, area, cleaningTimeInSeconds);
+        }
+    }
+
     private interface MessageHandler {
         void handleMessage(String topic, String payload);
     }
@@ -234,13 +246,37 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                 }
                 case "cleaninfo": {
                     CleanReport report = payloadAs(response, CleanReport.class);
-                    handleCleanModeUpdate(report.mode);
+                    final String modeValue;
+                    if (report.cleanState != null) {
+                        if ("working".equals(report.cleanState.motionState)) {
+                            modeValue = report.cleanState.type;
+                        } else {
+                            modeValue = report.cleanState.motionState;
+                        }
+                    } else {
+                        modeValue = report.state;
+                    }
+                    handleCleanModeUpdate(gson.fromJson(modeValue, CleanMode.class));
+                    break;
+                }
+                case "evt": {
+                    // EventReport report = payloadAs(reponse, EventReport.class);
+                    break;
+                }
+                case "lifespan": {
+                    // LifeSpanReport report = payloadAs(response, LifeSpanReport.class);
                     break;
                 }
                 case "speed": {
                     // SpeedReport report = payloadAs(response, SpeedReport.class);
-                    // SuctionPower power = SuctionPower.values()[report.speedLevel];
+                    // SuctionPower power = SuctionPower.fromJsonValue(report.speedLevel);
                     // TODO: report change
+                    break;
+                }
+                case "stats": {
+                    StatsReport report = payloadAs(response, StatsReport.class);
+                    handleStatsUpdate(report.area, report.timeInSeconds);
+                    break;
                 }
             }
         }
@@ -265,17 +301,57 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     private static class ChargeReport {
         @SerializedName("isCharging")
         public int isCharging;
+        @SerializedName("mode")
+        public String mode; // slot, ...?
     }
 
     private static class CleanReport {
         @SerializedName("trigger")
-        public String trigger;
+        public String trigger; // app, workComplete, ...?
         @SerializedName("state")
-        public CleanMode mode;
+        public String state;
+        @SerializedName("cleanState")
+        public CleanStateReport cleanState;
+    }
+
+    private static class CleanStateReport {
+        @SerializedName("router")
+        public String router; // plan, ...?
+        @SerializedName("type")
+        public String type;
+        @SerializedName("motionState")
+        public String motionState;
+    }
+
+    private static class EventReport {
+        @SerializedName("code")
+        public int eventCode;
+    }
+
+    private static class LifeSpanReport {
+
+    }
+
+    private static class SleepReport {
+        @SerializedName("enable")
+        public int sleeping;
     }
 
     private static class SpeedReport {
         @SerializedName("speed")
         public int speedLevel;
+    }
+
+    private static class StatsReport {
+        @SerializedName("area")
+        public int area;
+        @SerializedName("time")
+        public int timeInSeconds;
+        @SerializedName("cid")
+        public String cid; // run ID
+        @SerializedName("start")
+        public long startTimestamp;
+        @SerializedName("type")
+        public String type; // auto, ... ?
     }
 }
