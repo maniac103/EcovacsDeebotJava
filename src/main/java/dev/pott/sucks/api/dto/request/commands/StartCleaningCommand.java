@@ -21,7 +21,7 @@ public class StartCleaningCommand extends IotDeviceCommand<Void> {
     }
 
     @Override
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getPayloadJsonArgs() {
         Map<String, String> args = new HashMap<>();
         args.put("type", "auto");
         args.put("act", "start");

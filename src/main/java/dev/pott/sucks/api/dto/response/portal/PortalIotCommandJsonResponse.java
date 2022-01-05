@@ -16,17 +16,22 @@ public class PortalIotCommandJsonResponse extends AbstractPortalIotCommandRespon
     }
 
     public <T> T getResponsePayloadAs(Gson gson, Class<T> clazz) {
+        JsonElement payloadRaw = getResponsePayload(gson);
+        @Nullable
+        T payload = gson.fromJson(payloadRaw, clazz);
+        if (payload == null) {
+            throw new NullPointerException();
+        }
+        return payload;
+    }
+
+    public JsonElement getResponsePayload(Gson gson) {
         @Nullable
         JsonResponsePayloadWrapper wrapper = gson.fromJson(response, JsonResponsePayloadWrapper.class);
         if (wrapper == null) {
             throw new NullPointerException();
         }
-        @Nullable
-        T payload = gson.fromJson(wrapper.body.payload, clazz);
-        if (payload == null) {
-            throw new NullPointerException();
-        }
-        return payload;
+        return wrapper.body.payload;
     }
 
     public static class JsonPayloadHeader {

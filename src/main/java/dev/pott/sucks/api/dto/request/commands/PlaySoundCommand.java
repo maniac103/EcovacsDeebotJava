@@ -63,7 +63,7 @@ public class PlaySoundCommand extends IotDeviceCommand<Void> {
     }
 
     @Override
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getPayloadJsonArgs() {
         Map<String, String> args = new HashMap<>();
         args.put("sid", String.valueOf(soundId));
         return args;

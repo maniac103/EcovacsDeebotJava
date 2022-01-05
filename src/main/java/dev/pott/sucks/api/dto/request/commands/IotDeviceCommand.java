@@ -43,9 +43,9 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
 
         // JSON
         Map<String, Object> data = new HashMap<String, Object>();
-        Map<String, String> args = getPayloadJsonArgs();
+        Object args = getPayloadJsonArgs();
         data.put("header", new JsonPayloadHeader());
-        if (args != null && !args.isEmpty()) {
+        if (args != null) {
             Map<String, Object> body = new HashMap<String, Object>();
             body.put("data", args);
             data.put("body", body);
@@ -53,7 +53,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return gson.toJson(data).toString();
     }
 
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getPayloadJsonArgs() {
         return null;
     }
 

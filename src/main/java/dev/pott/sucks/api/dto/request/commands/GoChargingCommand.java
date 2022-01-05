@@ -21,7 +21,7 @@ public class GoChargingCommand extends IotDeviceCommand<Void> {
     }
 
     @Override
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getPayloadJsonArgs() {
         Map<String, String> args = new HashMap<>();
         args.put("act", "go");
         return args;

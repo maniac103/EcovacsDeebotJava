@@ -21,7 +21,7 @@ public class StopCommand extends IotDeviceCommand<Void> {
     }
 
     @Override
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getPayloadJsonArgs() {
         Map<String, String> args = new HashMap<>();
         args.put("act", "stop");
         return args;
