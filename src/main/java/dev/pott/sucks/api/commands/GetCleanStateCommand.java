@@ -1,6 +1,4 @@
-package dev.pott.sucks.api.dto.request.commands;
-
-import org.w3c.dom.Node;
+package dev.pott.sucks.api.commands;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -8,29 +6,30 @@ import com.google.gson.annotations.SerializedName;
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
+import dev.pott.sucks.cleaner.CleanMode;
 
-public class GetBatteryInfoCommand extends IotDeviceCommand<Integer> {
-    public GetBatteryInfoCommand() {
-        super("GetBatteryInfo", "getBattery");
+public class GetCleanStateCommand extends IotDeviceCommand<CleanMode> {
+    public GetCleanStateCommand() {
+        super("GetCleanState", "getCleanInfo");
     }
 
     @Override
-    public Integer convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
+    public CleanMode convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         if (response instanceof PortalIotCommandJsonResponse) {
             JsonResponse resp = ((PortalIotCommandJsonResponse) response).getResponsePayloadAs(gson,
                     JsonResponse.class);
-            return resp.value;
+            return resp.state;
         } else {
             String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
-            Node batteryAttr = getFirstXPathMatch(payload, "//battery/@power");
-            return Integer.valueOf(batteryAttr.getNodeValue());
+            String mode = getFirstXPathMatch(payload, "//clean/@type").getNodeValue();
+            return gson.fromJson(mode, CleanMode.class);
         }
     }
 
     private static class JsonResponse {
-        @SerializedName("value")
-        public int value;
-        @SerializedName("isLow")
-        public int isLow;
+        @SerializedName("trigger")
+        public String trigger;
+        @SerializedName("state")
+        public CleanMode state;
     }
 }

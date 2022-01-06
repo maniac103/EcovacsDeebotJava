@@ -1,15 +1,24 @@
-package dev.pott.sucks.api.dto.request.commands;
+package dev.pott.sucks.api.commands;
 
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -36,14 +45,23 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return false;
     }
 
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return String.format("<ctl td=\"%s\" />", xmlCommandName);
-        }
+    public final String getXmlPayload() throws Exception {
+        Document xmlDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element ctl = xmlDoc.createElement("ctl");
+        ctl.setAttribute("td", xmlCommandName);
+        applyXmlPayload(xmlDoc, ctl);
+        xmlDoc.appendChild(ctl);
+        Transformer tf = TransformerFactory.newInstance().newTransformer();
+        tf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        StringWriter writer = new StringWriter();
+        tf.transform(new DOMSource(xmlDoc), new StreamResult(writer));
+        return writer.getBuffer().toString().replaceAll("\n|\r", "");
+    }
 
+    public final String getJsonPayload(Gson gson) {
         // JSON
         Map<String, Object> data = new HashMap<String, Object>();
-        Object args = getPayloadJsonArgs();
+        Object args = getJsonPayloadArgs();
         data.put("header", new JsonPayloadHeader());
         if (args != null) {
             Map<String, Object> body = new HashMap<String, Object>();
@@ -53,8 +71,11 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return gson.toJson(data).toString();
     }
 
-    protected Object getPayloadJsonArgs() {
+    protected Object getJsonPayloadArgs() {
         return null;
+    }
+
+    protected void applyXmlPayload(Document doc, Element ctl) {
     }
 
     public abstract RESPONSETYPE convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception;

@@ -22,7 +22,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import dev.pott.sucks.api.dto.request.commands.IotDeviceCommand;
+import dev.pott.sucks.api.commands.IotDeviceCommand;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequest;
 import dev.pott.sucks.api.dto.request.portal.PortalAuthRequestParameter;
 import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest;
@@ -185,9 +185,15 @@ public final class EcovacsApi {
 
     public <T> T sendIotCommand(Device device, IotDeviceCommand<T> command) throws EcovacsApiException {
         boolean useJson = device.usesJsonApi() && !command.forceXmlFormat();
+        final String payload;
+        try {
+            payload = useJson ? command.getJsonPayload(gson) : command.getXmlPayload();
+        } catch (Exception e) {
+            throw new EcovacsApiException(e);
+        }
+
         PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(), command.getName(!useJson),
-                command.getPayload(gson, !useJson), device.getDid(), device.getResource(), device.getDeviceClass(),
-                useJson);
+                payload, device.getDid(), device.getResource(), device.getDeviceClass(), useJson);
         String json = gson.toJson(data);
         String url = EcovacsApiUrlFactory.getPortalIotDeviceManagerUrl(configuration.getContinent());
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)

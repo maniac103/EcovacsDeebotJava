@@ -1,5 +1,7 @@
-package dev.pott.sucks.api.dto.request.commands;
+package dev.pott.sucks.api.commands;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import java.lang.reflect.Type;
@@ -38,15 +40,12 @@ public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
     }
 
     @Override
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return "<ctl td=\"GetLifeSpan\" type=\"" + type.xmlValue + "\" />";
-        }
-        return super.getPayload(gson, asXml);
+    protected void applyXmlPayload(Document doc, Element ctl) {
+        ctl.setAttribute("type", type.xmlValue);
     }
 
     @Override
-    public Object getPayloadJsonArgs() {
+    protected Object getJsonPayloadArgs() {
         List<String> args = new ArrayList<>();
         args.add(type.jsonValue);
         return args;

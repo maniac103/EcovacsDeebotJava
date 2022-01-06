@@ -18,11 +18,11 @@ import com.hivemq.client.mqtt.MqttClientSslConfig;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient;
 import com.hivemq.client.mqtt.mqtt3.message.auth.Mqtt3SimpleAuth;
 
-import dev.pott.sucks.api.dto.request.commands.GetBatteryInfoCommand;
-import dev.pott.sucks.api.dto.request.commands.GetChargeStateCommand;
-import dev.pott.sucks.api.dto.request.commands.GetCleanStateCommand;
-import dev.pott.sucks.api.dto.request.commands.GetFirmwareVersionCommand;
-import dev.pott.sucks.api.dto.request.commands.IotDeviceCommand;
+import dev.pott.sucks.api.commands.GetBatteryInfoCommand;
+import dev.pott.sucks.api.commands.GetChargeStateCommand;
+import dev.pott.sucks.api.commands.GetCleanStateCommand;
+import dev.pott.sucks.api.commands.GetFirmwareVersionCommand;
+import dev.pott.sucks.api.commands.IotDeviceCommand;
 import dev.pott.sucks.api.dto.response.portal.Device;
 import dev.pott.sucks.api.dto.response.portal.IotProduct.ProductDefinition;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse.JsonResponsePayloadWrapper;

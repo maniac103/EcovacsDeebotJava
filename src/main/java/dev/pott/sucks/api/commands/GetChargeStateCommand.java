@@ -1,4 +1,4 @@
-package dev.pott.sucks.api.dto.request.commands;
+package dev.pott.sucks.api.commands;
 
 import org.w3c.dom.Node;
 
@@ -13,14 +13,6 @@ import dev.pott.sucks.cleaner.ChargeMode;
 public class GetChargeStateCommand extends IotDeviceCommand<ChargeMode> {
     public GetChargeStateCommand() {
         super("GetChargeState", "getChargeState");
-    }
-
-    @Override
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return "<query xmlns=\"com:ctl\"><ctl td=\"GetChargeState\" />";
-        }
-        return super.getPayload(gson, asXml);
     }
 
     @Override
