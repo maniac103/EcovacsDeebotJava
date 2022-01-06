@@ -15,5 +15,7 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-client:9.4.40.v20210413'
     compile 'com.google.code.gson:gson:2.8.9'
     compile 'com.hivemq:hivemq-mqtt-client:1.2.2'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.slf4j:slf4j-simple:1.7.21'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

@@ -18,6 +18,8 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -43,9 +45,11 @@ import dev.pott.sucks.util.MD5Util;
 
 @NonNullByDefault
 public final class EcovacsApi {
+    private final Logger logger = LoggerFactory.getLogger(EcovacsApi.class);
 
     private final HttpClient httpClient;
     private final Gson gson;
+
     private final EcovacsApiConfiguration configuration;
     private final Map<String, String> meta = new HashMap<>();
     private @Nullable PortalLoginResponse loginData;
@@ -189,16 +193,21 @@ public final class EcovacsApi {
         try {
             payload = useJson ? command.getJsonPayload(gson) : command.getXmlPayload();
         } catch (Exception e) {
+            logger.debug("Could not convert payload for command " + command, e);
             throw new EcovacsApiException(e);
         }
 
-        PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(), command.getName(!useJson),
-                payload, device.getDid(), device.getResource(), device.getDeviceClass(), useJson);
+        PortalIotCommandRequest data = new PortalIotCommandRequest(createAuthData(), command.getName(!useJson), payload,
+                device.getDid(), device.getResource(), device.getDeviceClass(), useJson);
         String json = gson.toJson(data);
         String url = EcovacsApiUrlFactory.getPortalIotDeviceManagerUrl(configuration.getContinent());
         Request request = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
         ContentResponse response = executeRequest(request);
+
+        logger.trace("Sent IOT command " + json);
+        logger.trace("Got response " + response.getContentAsString());
+
         final AbstractPortalIotCommandResponse commandResponse;
         if (useJson) {
             commandResponse = handleResponse(response, PortalIotCommandJsonResponse.class);
@@ -212,6 +221,7 @@ public final class EcovacsApi {
         try {
             return command.convertResponse(commandResponse, gson);
         } catch (Exception e) {
+            logger.debug("Converting response for command " + command + " failed", e);
             throw new EcovacsApiException(e);
         }
     }

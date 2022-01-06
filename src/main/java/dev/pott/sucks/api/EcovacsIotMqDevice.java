@@ -10,6 +10,8 @@ import javax.net.ssl.X509TrustManager;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -32,6 +34,8 @@ import dev.pott.sucks.cleaner.CleanMode;
 import io.netty.handler.ssl.util.SimpleTrustManagerFactory;
 
 public class EcovacsIotMqDevice implements EcovacsDevice {
+    private final Logger logger = LoggerFactory.getLogger(EcovacsIotMqDevice.class);
+
     private final Device device;
     private final ProductDefinition product;
     private final String firmwareVersion;
@@ -114,6 +118,7 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                 return;
             }
 
+            logger.debug("Established MQTT connection to device {}", getSerialNumber());
             String topic = String.format("iot/atr/+/%s/%s/%s/+", device.getDid(), device.getDeviceClass(),
                     device.getResource());
             mqttClient.subscribeWith().topicFilter(topic).callback(publish -> {
@@ -232,6 +237,8 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
             if (eventName.endsWith("_v2")) {
                 eventName = eventName.substring(0, eventName.length() - 3);
             }
+
+            logger.trace("{}: Got MQTT message on topic {}: {}", getSerialNumber(), topic, payload);
 
             switch (eventName) {
                 case "battery": {

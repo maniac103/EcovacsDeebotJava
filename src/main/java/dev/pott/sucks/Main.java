@@ -2,6 +2,8 @@ package dev.pott.sucks;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.GsonBuilder;
 
@@ -16,6 +18,7 @@ import dev.pott.sucks.util.MD5Util;
 public class Main {
 
     public static void main(String[] args) {
+        final Logger logger = LoggerFactory.getLogger(Main.class);
         SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
         sslContextFactory.setTrustAll(true);
         HttpClient httpClient = new HttpClient(sslContextFactory);
@@ -31,47 +34,44 @@ public class Main {
         EcovacsDevice.StateChangeListener listener = new EcovacsDevice.StateChangeListener() {
             @Override
             public void onBatteryLevelChanged(EcovacsDevice device, int newLevelPercent) {
-                System.out.println(device.getSerialNumber() + ": Battery changed to " + newLevelPercent + "%");
+                logger.info("{}: Battery changed to {} %", device.getSerialNumber(), newLevelPercent);
             }
 
             @Override
             public void onChargingStateChanged(EcovacsDevice device, boolean charging) {
-                System.out.println(
-                        device.getSerialNumber() + ": Battery " + (charging ? "now" : "no longer") + " charging");
+                logger.info("{}: Battery {} charging", device.getSerialNumber(), charging ? "now" : "no longer");
             }
 
             @Override
             public void onCleaningModeChanged(EcovacsDevice device, CleanMode newMode) {
-                System.out.println(device.getSerialNumber() + ": Mode changed to " + newMode);
+                logger.info("{}: Mode changed to {}", device.getSerialNumber(), newMode);
             }
 
             @Override
             public void onCleaningPowerChanged(EcovacsDevice device, SuctionPower newPower) {
-                System.out.println(device.getSerialNumber() + ": Power changed to " + newPower);
+                logger.info("{}: Power changed to {}", device.getSerialNumber(), newPower);
             }
 
             @Override
             public void onCleaningStatsChanged(EcovacsDevice device, int cleanedArea, int cleaningTimeSeconds) {
-                System.out.println(
-                        device.getSerialNumber() + ": Cleaned " + cleanedArea + " m² in " + cleaningTimeSeconds + "s");
+                logger.info("{}: Cleaned {} m² in {} s", device.getSerialNumber(), cleanedArea, cleaningTimeSeconds);
             }
 
             @Override
             public void onDeviceConnectionFailed(EcovacsDevice device, Throwable error) {
-                System.out.println(device.getSerialNumber() + ": Connection failed");
-                error.printStackTrace();
+                logger.warn(device.getSerialNumber() + ": Connection failed", error);
                 System.exit(1);
             }
         };
         try {
             api.loginAndGetAccessToken();
             for (EcovacsDevice device : api.getDevices()) {
-                System.out.println("Device " + device.getSerialNumber() + " is a " + device.getModelName() + ", FW "
-                        + device.getFirmwareVersion());
+                logger.info("Device {} is a {}, FW version {}", device.getSerialNumber(), device.getModelName(),
+                        device.getFirmwareVersion());
                 device.connect(listener);
             }
         } catch (EcovacsApiException e) {
-            System.out.println("API failure:");
+            logger.warn("API failure", e);
             e.printStackTrace();
         }
     }
