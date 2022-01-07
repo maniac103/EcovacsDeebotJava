@@ -12,6 +12,7 @@ import dev.pott.sucks.api.EcovacsApiConfiguration;
 import dev.pott.sucks.api.EcovacsApiException;
 import dev.pott.sucks.api.EcovacsDevice;
 import dev.pott.sucks.cleaner.CleanMode;
+import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
 import dev.pott.sucks.util.MD5Util;
 
@@ -55,6 +56,12 @@ public class Main {
             @Override
             public void onCleaningStatsChanged(EcovacsDevice device, int cleanedArea, int cleaningTimeSeconds) {
                 logger.info("{}: Cleaned {} m² in {} s", device.getSerialNumber(), cleanedArea, cleaningTimeSeconds);
+            }
+
+            @Override
+            public void onWaterSystemChanged(EcovacsDevice device, boolean present, MoppingWaterAmount amount) {
+                logger.info("{}: Water system now {}, amount {}", device.getSerialNumber(),
+                        present ? "present" : "missing", amount);
             }
 
             @Override
