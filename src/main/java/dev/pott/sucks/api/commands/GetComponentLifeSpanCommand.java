@@ -16,25 +16,12 @@ import com.google.gson.reflect.TypeToken;
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
+import dev.pott.sucks.cleaner.Component;
 
 public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
-    public enum ComponentType {
-        BRUSH("Brush", "brush"),
-        SIDE_BRUSH("SideBrush", "sideBrush"),
-        DUST_CASE_HEAP("DustCaseHeap", "heap");
+    private final Component type;
 
-        final String xmlValue;
-        final String jsonValue;
-
-        private ComponentType(String xmlValue, String jsonValue) {
-            this.xmlValue = xmlValue;
-            this.jsonValue = jsonValue;
-        }
-    }
-
-    private final ComponentType type;
-
-    public GetComponentLifeSpanCommand(ComponentType type) {
+    public GetComponentLifeSpanCommand(Component type) {
         super("GetLifeSpan", "getLifeSpan");
         this.type = type;
     }
