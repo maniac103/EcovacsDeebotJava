@@ -17,5 +17,6 @@ dependencies {
     compile 'com.hivemq:hivemq-mqtt-client:1.2.2'
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.slf4j:slf4j-simple:1.7.21'
+    compile 'io.netty:netty-codec-http:4.1.72.Final'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
