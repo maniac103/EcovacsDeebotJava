@@ -1,14 +1,14 @@
 package dev.pott.sucks.api;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.dto.request.portal.*;
+import dev.pott.sucks.api.dto.response.main.AccessData;
+import dev.pott.sucks.api.dto.response.main.AuthCode;
+import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.*;
+import dev.pott.sucks.util.MD5Util;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
@@ -21,27 +21,10 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import dev.pott.sucks.api.commands.IotDeviceCommand;
-import dev.pott.sucks.api.dto.request.portal.PortalAuthRequest;
-import dev.pott.sucks.api.dto.request.portal.PortalAuthRequestParameter;
-import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest;
-import dev.pott.sucks.api.dto.request.portal.PortalIotProductRequest;
-import dev.pott.sucks.api.dto.request.portal.PortalLoginRequest;
-import dev.pott.sucks.api.dto.response.main.AccessData;
-import dev.pott.sucks.api.dto.response.main.AuthCode;
-import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
-import dev.pott.sucks.api.dto.response.portal.Device;
-import dev.pott.sucks.api.dto.response.portal.IotProduct;
-import dev.pott.sucks.api.dto.response.portal.PortalDeviceResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotProductResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
-import dev.pott.sucks.util.MD5Util;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 @NonNullByDefault
 public final class EcovacsApi {
@@ -121,7 +104,7 @@ public final class EcovacsApi {
         authCodeParameters.put(RequestQueryParameter.AUTH_OPEN_ID, configuration.getAuthOpenId());
 
         HashMap<String, String> signedRequestParameters = getSignedRequestParameters(authCodeParameters,
-                ClientKeys.AUTH_CLIENT_KEY, ClientKeys.AUTH_CLIENT_SECRET);
+                configuration.getAuthClientKey(), configuration.getAuthClientSecret());
         String authCodeUrl = EcovacsApiUrlFactory.getAuthUrl(configuration.getCountry());
         Request authCodeRequest = httpClient.newRequest(authCodeUrl).method(HttpMethod.GET);
         signedRequestParameters.forEach(authCodeRequest::param);
@@ -269,11 +252,11 @@ public final class EcovacsApi {
     }
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
-        return getSignedRequestParameters(requestSpecificParameters, ClientKeys.CLIENT_KEY, ClientKeys.SECRET);
+        return getSignedRequestParameters(requestSpecificParameters, configuration.getClientKey(), configuration.getClientSecret());
     }
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters,
-            String clientKey, String clientSecret) {
+                                                               String clientKey, String clientSecret) {
         HashMap<String, String> signedRequestParameters = new HashMap<>(requestSpecificParameters);
         signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
 

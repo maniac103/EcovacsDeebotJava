@@ -7,15 +7,33 @@ public final class EcovacsApiConfiguration {
     private final String continent;
     private final String country;
     private final String language;
+    private final String clientKey;
+    private final String clientSecret;
+    private final String authClientKey;
+    private final String authClientSecret;
 
-    public EcovacsApiConfiguration(String deviceId, String username, String password, String continent, String country,
-            String language) {
+    public EcovacsApiConfiguration(
+            String deviceId,
+            String username,
+            String password,
+            String continent,
+            String country,
+            String language,
+            String clientKey,
+            String clientSecret,
+            String authClientKey,
+            String authClientSecret
+    ) {
         this.deviceId = deviceId;
         this.username = username;
         this.password = password;
         this.continent = continent;
         this.country = country;
         this.language = language;
+        this.clientKey = clientKey;
+        this.clientSecret = clientSecret;
+        this.authClientKey = authClientKey;
+        this.authClientSecret = authClientSecret;
     }
 
     public String getDeviceId() {
@@ -88,5 +106,21 @@ public final class EcovacsApiConfiguration {
 
     public String getDeviceType() {
         return "1";
+    }
+
+    public String getClientKey() {
+        return clientKey;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public String getAuthClientKey() {
+        return authClientKey;
+    }
+
+    public String getAuthClientSecret() {
+        return authClientSecret;
     }
 }

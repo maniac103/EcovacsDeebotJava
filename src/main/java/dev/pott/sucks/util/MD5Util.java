@@ -1,9 +1,14 @@
 package dev.pott.sucks.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class MD5Util {
+
+    private static final Logger logger = LoggerFactory.getLogger(MD5Util.class);
 
     private MD5Util() {
         // Prevent instantiation of util class
@@ -14,7 +19,7 @@ public class MD5Util {
         try {
             md = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            logger.error("Could not get MD5 MessageDigest instance", e);
             return null;
         }
         md.update(input.getBytes());
