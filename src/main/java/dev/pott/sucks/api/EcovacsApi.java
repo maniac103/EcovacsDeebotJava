@@ -1,14 +1,10 @@
 package dev.pott.sucks.api;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import dev.pott.sucks.api.commands.IotDeviceCommand;
-import dev.pott.sucks.api.dto.request.portal.*;
-import dev.pott.sucks.api.dto.response.main.AccessData;
-import dev.pott.sucks.api.dto.response.main.AuthCode;
-import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
-import dev.pott.sucks.api.dto.response.portal.*;
-import dev.pott.sucks.util.MD5Util;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
@@ -21,10 +17,16 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.dto.request.portal.*;
+import dev.pott.sucks.api.dto.response.main.AccessData;
+import dev.pott.sucks.api.dto.response.main.AuthCode;
+import dev.pott.sucks.api.dto.response.main.ResponseWrapper;
+import dev.pott.sucks.api.dto.response.portal.*;
+import dev.pott.sucks.util.MD5Util;
 
 @NonNullByDefault
 public final class EcovacsApi {
@@ -252,11 +254,12 @@ public final class EcovacsApi {
     }
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters) {
-        return getSignedRequestParameters(requestSpecificParameters, configuration.getClientKey(), configuration.getClientSecret());
+        return getSignedRequestParameters(requestSpecificParameters, configuration.getClientKey(),
+                configuration.getClientSecret());
     }
 
     private HashMap<String, String> getSignedRequestParameters(Map<String, String> requestSpecificParameters,
-                                                               String clientKey, String clientSecret) {
+            String clientKey, String clientSecret) {
         HashMap<String, String> signedRequestParameters = new HashMap<>(requestSpecificParameters);
         signedRequestParameters.put(RequestQueryParameter.AUTH_TIMESPAN, String.valueOf(System.currentTimeMillis()));
 

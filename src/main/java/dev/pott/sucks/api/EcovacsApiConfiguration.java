@@ -12,18 +12,8 @@ public final class EcovacsApiConfiguration {
     private final String authClientKey;
     private final String authClientSecret;
 
-    public EcovacsApiConfiguration(
-            String deviceId,
-            String username,
-            String password,
-            String continent,
-            String country,
-            String language,
-            String clientKey,
-            String clientSecret,
-            String authClientKey,
-            String authClientSecret
-    ) {
+    public EcovacsApiConfiguration(String deviceId, String username, String password, String continent, String country,
+            String language, String clientKey, String clientSecret, String authClientKey, String authClientSecret) {
         this.deviceId = deviceId;
         this.username = username;
         this.password = password;

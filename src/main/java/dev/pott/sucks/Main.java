@@ -1,6 +1,5 @@
 package dev.pott.sucks;
 
-import dev.pott.sucks.api.*;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
@@ -8,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.GsonBuilder;
 
+import dev.pott.sucks.api.*;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
@@ -28,18 +28,9 @@ public class Main {
         }
 
         String deviceId = MD5Util.getMD5Hash(String.valueOf(System.currentTimeMillis()));
-        EcovacsApiConfiguration ecovacsApiConfiguration = new EcovacsApiConfiguration(
-                deviceId,
-                "user",
-                "password",
-                "EU",
-                "DE",
-                "EN",
-                ClientKeys.CLIENT_KEY,
-                ClientKeys.CLIENT_SECRET,
-                ClientKeys.AUTH_CLIENT_KEY,
-                ClientKeys.AUTH_CLIENT_SECRET
-        );
+        EcovacsApiConfiguration ecovacsApiConfiguration = new EcovacsApiConfiguration(deviceId, "user", "password",
+                "EU", "DE", "EN", ClientKeys.CLIENT_KEY, ClientKeys.CLIENT_SECRET, ClientKeys.AUTH_CLIENT_KEY,
+                ClientKeys.AUTH_CLIENT_SECRET);
         EcovacsApi api = new EcovacsApi(httpClient, new GsonBuilder().create(), ecovacsApiConfiguration);
         EcovacsDevice.StateChangeListener listener = new EcovacsDevice.StateChangeListener() {
             @Override
