@@ -7,17 +7,17 @@ import dev.pott.sucks.api.PortalTodo;
 public class PortalAuthRequest {
 
     @SerializedName("todo")
-    private final PortalTodo todo;
+    final PortalTodo todo;
 
     @SerializedName("userid")
-    private final String userId;
+    final String userId;
 
     @SerializedName("auth")
-    private final PortalAuthRequestParameter auth;
+    final PortalAuthRequestParameter auth;
 
-    public PortalAuthRequest(PortalTodo todo, String userId, PortalAuthRequestParameter auth) {
+    public PortalAuthRequest(PortalTodo todo, PortalAuthRequestParameter auth) {
         this.todo = todo;
-        this.userId = userId;
+        this.userId = auth.userId;
         this.auth = auth;
     }
 }

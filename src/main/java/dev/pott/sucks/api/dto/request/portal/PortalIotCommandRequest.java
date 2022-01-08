@@ -5,28 +5,28 @@ import com.google.gson.annotations.SerializedName;
 public class PortalIotCommandRequest {
 
     @SerializedName("auth")
-    private final PortalAuthRequestParameter auth;
+    final PortalAuthRequestParameter auth;
 
     @SerializedName("cmdName")
-    private final String commandName;
+    final String commandName;
 
     @SerializedName("payload")
-    private final String payload;
+    final String payload;
 
     @SerializedName("payloadType")
-    private final String payloadType;
+    final String payloadType;
 
     @SerializedName("td")
-    private final String td = "q";
+    final String td = "q";
 
     @SerializedName("toId")
-    private final String targetDeviceId;
+    final String targetDeviceId;
 
     @SerializedName("toRes")
-    private final String targetResource;
+    final String targetResource;
 
     @SerializedName("toType")
-    private final String targetClass;
+    final String targetClass;
 
     public PortalIotCommandRequest(PortalAuthRequestParameter auth, String commandName, String payload,
             String targetDeviceId, String targetResource, String targetClass, boolean json) {
@@ -37,5 +37,20 @@ public class PortalIotCommandRequest {
         this.targetResource = targetResource;
         this.targetClass = targetClass;
         this.payloadType = json ? "j" : "x";
+    }
+
+    public static class JsonPayloadHeader {
+        @SerializedName("pri")
+        public final int pri = 1;
+        @SerializedName("ts")
+        public final long timestamp;
+        @SerializedName("tzm")
+        public final int tzm = 480;
+        @SerializedName("ver")
+        public final String version = "0.0.50";
+
+        public JsonPayloadHeader() {
+            timestamp = System.currentTimeMillis();
+        }
     }
 }

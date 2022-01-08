@@ -1,22 +1,31 @@
-package dev.pott.sucks.api.dto.request.commands;
+package dev.pott.sucks.api.commands;
 
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 
+import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public abstract class IotDeviceCommand<RESPONSETYPE> {
@@ -36,16 +45,25 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return false;
     }
 
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return String.format("<ctl td=\"%s\" />", xmlCommandName);
-        }
+    public final String getXmlPayload() throws Exception {
+        Document xmlDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element ctl = xmlDoc.createElement("ctl");
+        ctl.setAttribute("td", xmlCommandName);
+        applyXmlPayload(xmlDoc, ctl);
+        xmlDoc.appendChild(ctl);
+        Transformer tf = TransformerFactory.newInstance().newTransformer();
+        tf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        StringWriter writer = new StringWriter();
+        tf.transform(new DOMSource(xmlDoc), new StreamResult(writer));
+        return writer.getBuffer().toString().replaceAll("\n|\r", "");
+    }
 
+    public final String getJsonPayload(Gson gson) {
         // JSON
         Map<String, Object> data = new HashMap<String, Object>();
-        Map<String, String> args = getPayloadJsonArgs();
+        Object args = getJsonPayloadArgs();
         data.put("header", new JsonPayloadHeader());
-        if (args != null && !args.isEmpty()) {
+        if (args != null) {
             Map<String, Object> body = new HashMap<String, Object>();
             body.put("data", args);
             data.put("body", body);
@@ -53,8 +71,11 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return gson.toJson(data).toString();
     }
 
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getJsonPayloadArgs() {
         return null;
+    }
+
+    protected void applyXmlPayload(Document doc, Element ctl) {
     }
 
     public abstract RESPONSETYPE convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception;
@@ -68,36 +89,5 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
             throw new NoSuchElementException();
         }
         return nodes.item(0);
-    }
-
-    private static class JsonPayloadHeader {
-        @SerializedName("pri")
-        public final int pri = 1;
-        @SerializedName("ts")
-        public final long timestamp;
-        @SerializedName("tzm")
-        public final int tzm = 480;
-        @SerializedName("ver")
-        public final String version = "0.0.50";
-
-        public JsonPayloadHeader() {
-            timestamp = System.currentTimeMillis();
-        }
-    }
-
-    protected static class JsonResponsePayloadWrapper<T> {
-        @SerializedName("header")
-        public JsonPayloadHeader header;
-        @SerializedName("body")
-        public JsonResponsePayloadBody<T> body;
-    }
-
-    protected static class JsonResponsePayloadBody<T> {
-        @SerializedName("code")
-        public int code;
-        @SerializedName("msg")
-        public String message;
-        @SerializedName("data")
-        public T payload;
     }
 }

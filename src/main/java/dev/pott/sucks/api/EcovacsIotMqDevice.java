@@ -8,28 +8,37 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.MqttClientSslConfig;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient;
 import com.hivemq.client.mqtt.mqtt3.message.auth.Mqtt3SimpleAuth;
 
-import dev.pott.sucks.api.dto.request.commands.GetBatteryInfoCommand;
-import dev.pott.sucks.api.dto.request.commands.GetChargeStateCommand;
-import dev.pott.sucks.api.dto.request.commands.GetCleanStateCommand;
-import dev.pott.sucks.api.dto.request.commands.GetFirmwareVersionCommand;
-import dev.pott.sucks.api.dto.request.commands.IotDeviceCommand;
+import dev.pott.sucks.api.commands.GetBatteryInfoCommand;
+import dev.pott.sucks.api.commands.GetChargeStateCommand;
+import dev.pott.sucks.api.commands.GetCleanStateCommand;
+import dev.pott.sucks.api.commands.GetFirmwareVersionCommand;
+import dev.pott.sucks.api.commands.GetMoppingWaterAmountCommand;
+import dev.pott.sucks.api.commands.GetWaterSystemPresentCommand;
+import dev.pott.sucks.api.commands.IotDeviceCommand;
 import dev.pott.sucks.api.dto.response.portal.Device;
 import dev.pott.sucks.api.dto.response.portal.IotProduct.ProductDefinition;
+import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse.JsonResponsePayloadWrapper;
 import dev.pott.sucks.api.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.cleaner.ChargeMode;
 import dev.pott.sucks.cleaner.CleanMode;
-import dev.pott.sucks.cleaner.SuctionPower;
+import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import io.netty.handler.ssl.util.SimpleTrustManagerFactory;
 
 public class EcovacsIotMqDevice implements EcovacsDevice {
+    private final Logger logger = LoggerFactory.getLogger(EcovacsIotMqDevice.class);
+
     private final Device device;
     private final ProductDefinition product;
     private final String firmwareVersion;
@@ -42,6 +51,8 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     private int lastBatteryLevel;
     private boolean wasCharging;
     private CleanMode lastCleanMode;
+    private boolean wasWaterSystemPresent;
+    private MoppingWaterAmount lastWaterAmount;
 
     EcovacsIotMqDevice(Device device, ProductDefinition product, EcovacsApi api, Gson gson) throws EcovacsApiException {
         this.device = device;
@@ -81,6 +92,10 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     public void connect(final StateChangeListener listener) throws EcovacsApiException {
         EcovacsApiConfiguration config = api.getConfig();
         PortalLoginResponse loginData = api.getLoginData();
+        if (loginData == null) {
+            throw new EcovacsApiException("Can not connect when not logged in");
+        }
+
         // TOOD: use realm from config
         String userName = loginData.getUserId() + "@ecouser";
         String host = String.format("mq-%s.ecouser.net", config.getContinent());
@@ -94,10 +109,13 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         lastBatteryLevel = api.sendIotCommand(device, new GetBatteryInfoCommand());
         wasCharging = api.sendIotCommand(device, new GetChargeStateCommand()) == ChargeMode.CHARGING;
         lastCleanMode = api.sendIotCommand(device, new GetCleanStateCommand());
+        wasWaterSystemPresent = api.sendIotCommand(device, new GetWaterSystemPresentCommand());
+        lastWaterAmount = api.sendIotCommand(device, new GetMoppingWaterAmountCommand());
 
         listener.onBatteryLevelChanged(this, lastBatteryLevel);
         listener.onChargingStateChanged(this, wasCharging);
         listener.onCleaningModeChanged(this, lastCleanMode);
+        listener.onWaterSystemChanged(this, wasWaterSystemPresent, lastWaterAmount);
 
         mqttClient = MqttClient.builder().useMqttVersion3().identifier(userName + "/" + loginData.getResource())
                 .simpleAuth(auth).serverHost(host).serverPort(8883).sslConfig(sslConfig).buildAsync();
@@ -108,11 +126,16 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                 return;
             }
 
+            logger.debug("Established MQTT connection to device {}", getSerialNumber());
             String topic = String.format("iot/atr/+/%s/%s/%s/+", device.getDid(), device.getDeviceClass(),
                     device.getResource());
             mqttClient.subscribeWith().topicFilter(topic).callback(publish -> {
                 String payload = new String(publish.getPayloadAsBytes());
-                messageHandler.handleMessage(publish.getTopic().toString(), payload);
+                try {
+                    messageHandler.handleMessage(publish.getTopic().toString(), payload);
+                } catch (Exception e) {
+                    handleMqttError(e);
+                }
             }).send().whenComplete((subAck, subError) -> {
                 if (subError != null) {
                     handleMqttError(subError);
@@ -130,7 +153,9 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     }
 
     private void handleMqttError(Throwable t) {
-        // TODO: retry?
+        if (listener != null) {
+            listener.onDeviceConnectionFailed(this, t);
+        }
     }
 
     private TrustManagerFactory createTrustManagerFactory() {
@@ -186,6 +211,21 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         }
     }
 
+    private void handleStatsUpdate(int area, int cleaningTimeInSeconds) {
+        if (listener != null) {
+            listener.onCleaningStatsChanged(this, area, cleaningTimeInSeconds);
+        }
+    }
+
+    private void handleWaterInfoUpdate(boolean present, int level) {
+        MoppingWaterAmount amount = MoppingWaterAmount.fromApiValue(level);
+        if (listener != null && (wasWaterSystemPresent != present || lastWaterAmount != amount)) {
+            wasWaterSystemPresent = present;
+            lastWaterAmount = amount;
+            listener.onWaterSystemChanged(this, present, amount);
+        }
+    }
+
     private interface MessageHandler {
         void handleMessage(String topic, String payload);
     }
@@ -201,67 +241,83 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         public void handleMessage(String topic, String payload) {
             String eventName = topic.split("/")[2].toLowerCase();
             JsonResponsePayloadWrapper response = gson.fromJson(payload, JsonResponsePayloadWrapper.class);
+            if (response == null) {
+                return;
+            }
             // TODO: update FW version?
-            JsonElement msgData = response.body.payload;
 
             if (eventName.startsWith("on")) {
                 eventName = eventName.substring(2);
             } else if (eventName.startsWith("report")) {
                 eventName = eventName.substring(6);
             }
-            ;
             if (eventName.endsWith("_v2")) {
                 eventName = eventName.substring(0, eventName.length() - 3);
             }
 
+            logger.trace("{}: Got MQTT message on topic {}: {}", getSerialNumber(), topic, payload);
+
             switch (eventName) {
                 case "battery": {
-                    BatteryReport report = gson.fromJson(msgData, BatteryReport.class);
+                    BatteryReport report = payloadAs(response, BatteryReport.class);
                     handleBatteryLevelUpdate(report.percent);
                     break;
                 }
                 case "chargestate": {
-                    ChargeReport report = gson.fromJson(msgData, ChargeReport.class);
+                    ChargeReport report = payloadAs(response, ChargeReport.class);
                     handleChargingStateUpdate(report.isCharging != 0);
                     break;
                 }
                 case "cleaninfo": {
-                    CleanReport report = gson.fromJson(msgData, CleanReport.class);
-                    handleCleanModeUpdate(report.mode);
+                    CleanReport report = payloadAs(response, CleanReport.class);
+                    final String modeValue;
+                    if (report.cleanState != null) {
+                        if ("working".equals(report.cleanState.motionState)) {
+                            modeValue = report.cleanState.type;
+                        } else {
+                            modeValue = report.cleanState.motionState;
+                        }
+                    } else {
+                        modeValue = report.state;
+                    }
+                    handleCleanModeUpdate(gson.fromJson(modeValue, CleanMode.class));
+                    break;
+                }
+                case "evt": {
+                    // EventReport report = payloadAs(reponse, EventReport.class);
+                    break;
+                }
+                case "lifespan": {
+                    // LifeSpanReport report = payloadAs(response, LifeSpanReport.class);
                     break;
                 }
                 case "speed": {
-                    SpeedReport report = gson.fromJson(msgData, SpeedReport.class);
-                    SuctionPower power = SuctionPower.values()[report.speedLevel];
+                    // SpeedReport report = payloadAs(response, SpeedReport.class);
+                    // SuctionPower power = SuctionPower.fromJsonValue(report.speedLevel);
                     // TODO: report change
+                    break;
+                }
+                case "stats": {
+                    StatsReport report = payloadAs(response, StatsReport.class);
+                    handleStatsUpdate(report.area, report.timeInSeconds);
+                    break;
+                }
+                case "waterinfo": {
+                    WaterInfoReport report = payloadAs(response, WaterInfoReport.class);
+                    handleWaterInfoUpdate(report.waterPlatePresent != 0, report.waterAmount);
+                    break;
                 }
             }
         }
-    }
 
-    private static class JsonPayloadHeader {
-        @SerializedName("pri")
-        public int pri;
-        @SerializedName("ts")
-        public long timestamp;
-        @SerializedName("tzm")
-        public int tzm;
-        @SerializedName("fwVer")
-        public String firmwareVersion;
-        @SerializedName("hwVer")
-        public String hardwareVersion;
-    }
-
-    private static class JsonResponsePayloadWrapper {
-        @SerializedName("header")
-        public JsonPayloadHeader header;
-        @SerializedName("body")
-        public JsonResponsePayloadBody body;
-    }
-
-    private static class JsonResponsePayloadBody {
-        @SerializedName("data")
-        public JsonElement payload;
+        private <T> @NonNull T payloadAs(JsonResponsePayloadWrapper response, Class<T> clazz) {
+            @Nullable
+            T payload = gson.fromJson(response.body.payload, clazz);
+            if (payload == null) {
+                throw new NullPointerException();
+            }
+            return payload;
+        }
     }
 
     private static class BatteryReport {
@@ -274,17 +330,64 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     private static class ChargeReport {
         @SerializedName("isCharging")
         public int isCharging;
+        @SerializedName("mode")
+        public String mode; // slot, ...?
     }
 
     private static class CleanReport {
         @SerializedName("trigger")
-        public String trigger;
+        public String trigger; // app, workComplete, ...?
         @SerializedName("state")
-        public CleanMode mode;
+        public String state;
+        @SerializedName("cleanState")
+        public CleanStateReport cleanState;
+    }
+
+    private static class CleanStateReport {
+        @SerializedName("router")
+        public String router; // plan, ...?
+        @SerializedName("type")
+        public String type;
+        @SerializedName("motionState")
+        public String motionState;
+    }
+
+    private static class EventReport {
+        @SerializedName("code")
+        public int eventCode;
+    }
+
+    private static class LifeSpanReport {
+
+    }
+
+    private static class SleepReport {
+        @SerializedName("enable")
+        public int sleeping;
     }
 
     private static class SpeedReport {
         @SerializedName("speed")
         public int speedLevel;
+    }
+
+    private static class StatsReport {
+        @SerializedName("area")
+        public int area;
+        @SerializedName("time")
+        public int timeInSeconds;
+        @SerializedName("cid")
+        public String cid; // run ID
+        @SerializedName("start")
+        public long startTimestamp;
+        @SerializedName("type")
+        public String type; // auto, ... ?
+    }
+    
+    private static class WaterInfoReport {
+        @SerializedName("enable")
+        public int waterPlatePresent;
+        @SerializedName("amount")
+        public int waterAmount;
     }
 }

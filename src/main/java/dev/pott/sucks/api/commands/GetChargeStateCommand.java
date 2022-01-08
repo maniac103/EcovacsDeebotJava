@@ -1,12 +1,9 @@
-package dev.pott.sucks.api.dto.request.commands;
-
-import java.lang.reflect.Type;
+package dev.pott.sucks.api.commands;
 
 import org.w3c.dom.Node;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
@@ -19,21 +16,11 @@ public class GetChargeStateCommand extends IotDeviceCommand<ChargeMode> {
     }
 
     @Override
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return "<query xmlns=\"com:ctl\"><ctl td=\"GetChargeState\" />";
-        }
-        return super.getPayload(gson, asXml);
-    }
-
-    @Override
     public ChargeMode convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         if (response instanceof PortalIotCommandJsonResponse) {
-            Type type = new TypeToken<JsonResponsePayloadWrapper<JsonResponse>>() {
-            }.getType();
-            JsonResponsePayloadWrapper<JsonResponse> wrapper = ((PortalIotCommandJsonResponse) response)
-                    .getResponsePayloadAs(gson, type);
-            return wrapper.body.payload.charging != 0 ? ChargeMode.CHARGING : ChargeMode.IDLE;
+            JsonResponse resp = ((PortalIotCommandJsonResponse) response).getResponsePayloadAs(gson,
+                    JsonResponse.class);
+            return resp.charging != 0 ? ChargeMode.CHARGING : ChargeMode.IDLE;
         } else {
             String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
             Node typeAttr = getFirstXPathMatch(payload, "//charge/@type");

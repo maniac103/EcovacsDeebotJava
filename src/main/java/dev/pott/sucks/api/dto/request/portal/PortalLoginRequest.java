@@ -7,31 +7,31 @@ import dev.pott.sucks.api.PortalTodo;
 public class PortalLoginRequest {
 
     @SerializedName("todo")
-    private final PortalTodo todo;
+    final PortalTodo todo;
 
     @SerializedName("country")
-    private final String country;
+    final String country;
 
     @SerializedName("last")
-    private final String last;
+    final String last;
 
     @SerializedName("org")
-    private final String org;
+    final String org;
 
     @SerializedName("resource")
-    private final String resource;
+    final String resource;
 
     @SerializedName("realm")
-    private final String realm;
+    final String realm;
 
     @SerializedName("token")
-    private final String token;
+    final String token;
 
     @SerializedName("userid")
-    private final String userId;
+    final String userId;
 
     @SerializedName("edition")
-    private final String edition;
+    final String edition;
 
     public PortalLoginRequest(PortalTodo todo, String country, String last, String org, String resource, String realm,
             String token, String userId, String edition) {

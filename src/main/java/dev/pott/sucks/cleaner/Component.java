@@ -1,12 +1,15 @@
 package dev.pott.sucks.cleaner;
 
 public enum Component {
-    SIDE_BRUSH,
-    MAIN_BRUSH,
-    FILTER;
+    BRUSH("Brush", "brush"),
+    SIDE_BRUSH("SideBrush", "sideBrush"),
+    DUST_CASE_HEAP("DustCaseHeap", "heap");
 
-    @Override
-    public String toString() {
-        return this.name().toLowerCase();
+    public final String xmlValue;
+    public final String jsonValue;
+
+    private Component(String xmlValue, String jsonValue) {
+        this.xmlValue = xmlValue;
+        this.jsonValue = jsonValue;
     }
 }

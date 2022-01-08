@@ -1,9 +1,12 @@
-package dev.pott.sucks.api.dto.request.commands;
+package dev.pott.sucks.api.commands;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 
@@ -55,15 +58,12 @@ public class PlaySoundCommand extends IotDeviceCommand<Void> {
     }
 
     @Override
-    public String getPayload(Gson gson, boolean asXml) {
-        if (asXml) {
-            return String.format("<ctl td=\"PlaySound\" sid=\"%d\"/>", soundId);
-        }
-        return getPayload(gson, asXml);
+    protected void applyXmlPayload(Document doc, Element ctl) {
+        ctl.setAttribute("sid", String.valueOf(soundId));
     }
 
     @Override
-    protected Map<String, String> getPayloadJsonArgs() {
+    protected Object getJsonPayloadArgs() {
         Map<String, String> args = new HashMap<>();
         args.put("sid", String.valueOf(soundId));
         return args;
