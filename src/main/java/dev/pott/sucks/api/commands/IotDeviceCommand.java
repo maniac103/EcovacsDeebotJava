@@ -25,8 +25,8 @@ import org.xml.sax.InputSource;
 
 import com.google.gson.Gson;
 
-import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public abstract class IotDeviceCommand<RESPONSETYPE> {
     private final String xmlCommandName;
@@ -58,8 +58,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return writer.getBuffer().toString().replaceAll("\n|\r", "");
     }
 
-    public final String getJsonPayload(Gson gson) {
-        // JSON
+    public final Object getJsonPayload(Gson gson) {
         Map<String, Object> data = new HashMap<String, Object>();
         Object args = getJsonPayloadArgs();
         data.put("header", new JsonPayloadHeader());
@@ -68,7 +67,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
             body.put("data", args);
             data.put("body", body);
         }
-        return gson.toJson(data).toString();
+        return data;
     }
 
     protected Object getJsonPayloadArgs() {
@@ -82,12 +81,17 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
 
     protected Node getFirstXPathMatch(String xml, String xpathExpression)
             throws XPathExpressionException, NoSuchElementException {
+        return getXPathMatches(xml, xpathExpression).item(0);
+    }
+
+    protected NodeList getXPathMatches(String xml, String xpathExpression)
+            throws XPathExpressionException, NoSuchElementException {
         InputSource inputXML = new InputSource(new StringReader(xml));
         XPath xPath = XPathFactory.newInstance().newXPath();
         NodeList nodes = (NodeList) xPath.evaluate(xpathExpression, inputXML, XPathConstants.NODESET);
         if (nodes.getLength() == 0) {
             throw new NoSuchElementException();
         }
-        return nodes.item(0);
+        return nodes;
     }
 }

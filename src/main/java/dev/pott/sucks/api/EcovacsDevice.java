@@ -3,7 +3,9 @@ package dev.pott.sucks.api;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.commands.MultiCommand;
 import dev.pott.sucks.cleaner.CleanMode;
+import dev.pott.sucks.cleaner.DeviceCapability;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
 
@@ -33,9 +35,13 @@ public interface EcovacsDevice {
 
     public String getFirmwareVersion();
 
+    public boolean hasCapability(DeviceCapability cap);
+
     public void connect(StateChangeListener listener) throws EcovacsApiException;
 
     public void disconnect();
 
     public <T> T sendCommand(IotDeviceCommand<T> command) throws EcovacsApiException;
+
+    public <T> T sendCommand(MultiCommand<T> command) throws EcovacsApiException;
 }

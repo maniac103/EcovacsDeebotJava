@@ -3,12 +3,12 @@ package dev.pott.sucks.api.commands;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
+import com.google.gson.Gson;
+
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public class PlaySoundCommand extends IotDeviceCommand<Void> {
     public enum SoundType {

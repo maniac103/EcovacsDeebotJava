@@ -5,13 +5,11 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.GsonBuilder;
-
 import dev.pott.sucks.api.*;
+import dev.pott.sucks.api.util.MD5Util;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
-import dev.pott.sucks.util.MD5Util;
 
 public class Main {
 
@@ -31,7 +29,7 @@ public class Main {
         EcovacsApiConfiguration ecovacsApiConfiguration = new EcovacsApiConfiguration(deviceId, "user", "password",
                 "EU", "DE", "EN", ClientKeys.CLIENT_KEY, ClientKeys.CLIENT_SECRET, ClientKeys.AUTH_CLIENT_KEY,
                 ClientKeys.AUTH_CLIENT_SECRET);
-        EcovacsApi api = new EcovacsApi(httpClient, new GsonBuilder().create(), ecovacsApiConfiguration);
+        EcovacsApi api = EcovacsApi.create(httpClient, ecovacsApiConfiguration);
         EcovacsDevice.StateChangeListener listener = new EcovacsDevice.StateChangeListener() {
             @Override
             public void onBatteryLevelChanged(EcovacsDevice device, int newLevelPercent) {

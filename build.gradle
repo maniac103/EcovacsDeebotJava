@@ -10,6 +10,17 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'images/main/resources'
+        }
+    }
+}
+
 dependencies {
     compile 'org.eclipse.jdt:org.eclipse.jdt.annotation:2.2.600'
     compile 'org.eclipse.jetty:jetty-client:9.4.40.v20210413'
