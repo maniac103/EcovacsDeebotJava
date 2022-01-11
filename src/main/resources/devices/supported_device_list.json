@@ -1,0 +1,27 @@
+[
+    {
+        "modelName": "DEEBOT OZMO 950 Series",
+        "deviceClass": "yna5xi",
+        "usesJsonApi": true,
+        "usesMqtt": true,
+        "capabilities": [
+            "mopping_system",
+            "main_brush",
+            "spot_area_cleaning",
+            "clean_speed_control",
+            "voice_reporting"
+        ]
+    },
+
+    {
+        "modelName": "DEEBOT OZMO 920",
+        "deviceClass": "vi829v",
+        "deviceClassLink": "yna5xi"
+    },
+
+    {
+        "modelName": "DEEBOT OZMO T5",
+        "deviceClass": "9rft3c",
+        "deviceClassLink": "yna5xi"
+    }
+]

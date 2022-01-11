@@ -1,9 +1,12 @@
 package dev.pott.sucks.api;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -19,8 +22,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 
 import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.dto.DeviceDescription;
 import dev.pott.sucks.api.dto.request.portal.*;
 import dev.pott.sucks.api.dto.response.main.AccessData;
 import dev.pott.sucks.api.dto.response.main.AuthCode;
@@ -134,22 +139,53 @@ public final class EcovacsApi {
     }
 
     public List<EcovacsDevice> getDevices() throws EcovacsApiException {
-        List<IotProduct> products = getIotProductMap();
+        List<DeviceDescription> descriptions = getSupportedDeviceList();
+        List<IotProduct> products = null;
         List<EcovacsDevice> devices = new ArrayList<>();
         for (Device dev : getDeviceList()) {
-            Optional<IotProduct> product = products.stream()
-                    .filter(prod -> dev.getDeviceClass().equals(prod.getClassId())).findFirst();
-            if (!product.isPresent()) {
-                // FIXME: throw instead?
+            Optional<DeviceDescription> descOpt = descriptions.stream()
+                    .filter(d -> dev.getDeviceClass().equals(d.deviceClass)).findFirst();
+            if (!descOpt.isPresent()) {
+                if (products == null) {
+                    products = getIotProductMap();
+                }
+                Optional<IotProduct> product = products.stream()
+                        .filter(prod -> dev.getDeviceClass().equals(prod.getClassId())).findFirst();
+                logger.info("Found unsupported device {} (class {}), ignoring.",
+                        product.isPresent() ? product.get().getDefinition().name : "UNKNOWN", dev.getDeviceClass());
                 continue;
             }
-            if (dev.getCompany().equals("eco-ng")) {
-                devices.add(new EcovacsIotMqDevice(dev, product.get().getDefinition(), this, gson));
+            DeviceDescription desc = descOpt.get();
+            if (desc.usesMqtt) {
+                devices.add(new EcovacsIotMqDevice(dev, desc, this, gson));
             } else {
                 // TODO: XMPP device
             }
         }
         return devices;
+    }
+
+    private List<DeviceDescription> getSupportedDeviceList() {
+        InputStream is = getClass().getClassLoader().getResourceAsStream("devices/supported_device_list.json");
+        JsonReader reader = new JsonReader(new InputStreamReader(is));
+        Type type = new TypeToken<List<DeviceDescription>>() {
+        }.getType();
+        List<DeviceDescription> descs = gson.fromJson(reader, type);
+        return descs.stream().map(desc -> {
+            final DeviceDescription result;
+            if (desc.deviceClassLink != null) {
+                Optional<DeviceDescription> linkedDescOpt = descs.stream()
+                        .filter(d -> d.deviceClass.equals(desc.deviceClassLink)).findFirst();
+                if (!linkedDescOpt.isPresent()) {
+                    throw new IllegalStateException(
+                            "Desc " + desc.deviceClass + " links unknown desc " + desc.deviceClassLink);
+                }
+                result = desc.resolveLinkWith(linkedDescOpt.get());
+            } else {
+                result = desc;
+            }
+            return result;
+        }).collect(Collectors.toList());
     }
 
     private List<Device> getDeviceList() throws EcovacsApiException {
@@ -172,8 +208,9 @@ public final class EcovacsApi {
         return handleResponse(deviceResponse, PortalIotProductResponse.class).getProducts();
     }
 
-    public <T> T sendIotCommand(Device device, IotDeviceCommand<T> command) throws EcovacsApiException {
-        boolean useJson = device.usesJsonApi() && !command.forceXmlFormat();
+    public <T> T sendIotCommand(Device device, DeviceDescription desc, IotDeviceCommand<T> command)
+            throws EcovacsApiException {
+        boolean useJson = desc.usesJsonApi && !command.forceXmlFormat();
         final String payload;
         try {
             payload = useJson ? command.getJsonPayload(gson) : command.getXmlPayload();
