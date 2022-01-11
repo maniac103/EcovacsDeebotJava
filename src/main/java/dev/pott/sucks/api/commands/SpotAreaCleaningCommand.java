@@ -1,13 +1,12 @@
 package dev.pott.sucks.api.commands;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import com.google.gson.Gson;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.google.gson.Gson;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 

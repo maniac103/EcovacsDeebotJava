@@ -3,10 +3,10 @@ package dev.pott.sucks.api.commands;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.google.gson.Gson;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
@@ -28,7 +28,6 @@ public class SetMoppingWaterAmountCommand extends IotDeviceCommand<Void> {
         args.put("amount", level);
         return args;
     }
-
 
     public Void convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         return null;

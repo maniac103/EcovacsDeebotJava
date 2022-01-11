@@ -38,5 +38,4 @@ public class GetTotalStatsCommand extends IotDeviceCommand<GetTotalStatsCommand.
             return new TotalStats(Integer.valueOf(area), Integer.valueOf(time), Integer.valueOf(count));
         }
     }
-
 }

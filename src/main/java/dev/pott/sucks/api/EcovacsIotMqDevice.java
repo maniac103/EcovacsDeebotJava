@@ -383,7 +383,7 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         @SerializedName("type")
         public String type; // auto, ... ?
     }
-    
+
     private static class WaterInfoReport {
         @SerializedName("enable")
         public int waterPlatePresent;
