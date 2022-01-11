@@ -3,9 +3,9 @@ package dev.pott.sucks.api.commands;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandXmlResponse;
 
 public class GetTotalStatsCommand extends IotDeviceCommand<GetTotalStatsCommand.TotalStats> {
     public class TotalStats {

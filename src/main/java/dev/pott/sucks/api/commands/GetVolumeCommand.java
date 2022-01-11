@@ -6,8 +6,8 @@ import org.w3c.dom.Element;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse;
 
 public class GetVolumeCommand extends IotDeviceCommand<Integer> {
     public GetVolumeCommand() {

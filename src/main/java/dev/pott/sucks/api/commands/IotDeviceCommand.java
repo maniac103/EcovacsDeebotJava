@@ -25,8 +25,8 @@ import org.xml.sax.InputSource;
 
 import com.google.gson.Gson;
 
-import dev.pott.sucks.api.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.request.portal.PortalIotCommandRequest.JsonPayloadHeader;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public abstract class IotDeviceCommand<RESPONSETYPE> {
     private final String xmlCommandName;

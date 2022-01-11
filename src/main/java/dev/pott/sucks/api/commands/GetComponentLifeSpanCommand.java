@@ -13,9 +13,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandJsonResponse;
-import dev.pott.sucks.api.dto.response.portal.PortalIotCommandXmlResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandXmlResponse;
 import dev.pott.sucks.cleaner.Component;
 
 public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {

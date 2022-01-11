@@ -8,7 +8,7 @@ import org.w3c.dom.Element;
 
 import com.google.gson.Gson;
 
-import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
+import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
 
 public class PlaySoundCommand extends IotDeviceCommand<Void> {
     public enum SoundType {
