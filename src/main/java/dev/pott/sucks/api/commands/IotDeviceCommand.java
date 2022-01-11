@@ -81,12 +81,17 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
 
     protected Node getFirstXPathMatch(String xml, String xpathExpression)
             throws XPathExpressionException, NoSuchElementException {
+        return getXPathMatches(xml, xpathExpression).item(0);
+    }
+
+    protected NodeList getXPathMatches(String xml, String xpathExpression)
+            throws XPathExpressionException, NoSuchElementException {
         InputSource inputXML = new InputSource(new StringReader(xml));
         XPath xPath = XPathFactory.newInstance().newXPath();
         NodeList nodes = (NodeList) xPath.evaluate(xpathExpression, inputXML, XPathConstants.NODESET);
         if (nodes.getLength() == 0) {
             throw new NoSuchElementException();
         }
-        return nodes.item(0);
+        return nodes;
     }
 }

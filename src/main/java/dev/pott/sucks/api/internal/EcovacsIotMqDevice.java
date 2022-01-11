@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.MqttClientSslConfig;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient;
@@ -30,6 +29,7 @@ import dev.pott.sucks.api.commands.GetFirmwareVersionCommand;
 import dev.pott.sucks.api.commands.GetMoppingWaterAmountCommand;
 import dev.pott.sucks.api.commands.GetWaterSystemPresentCommand;
 import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.commands.MultiCommand;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.BatteryReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.ChargeReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.CleanReport;
@@ -100,6 +100,15 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
     @Override
     public <T> T sendCommand(IotDeviceCommand<T> command) throws EcovacsApiException {
         return api.sendIotCommand(device, desc, command);
+    }
+
+    @Override
+    public <T> T sendCommand(MultiCommand<T> command) throws EcovacsApiException {
+        IotDeviceCommand<?> next = command.getFirstCommand(!desc.usesJsonApi);
+        while (next != null) {
+            next = command.processResultAndGetNextCommand(api.sendIotCommand(device, desc, next));
+        }
+        return command.getResult();
     }
 
     @Override

@@ -16,8 +16,7 @@ public class GetCleanStateCommand extends IotDeviceCommand<CleanMode> {
     @Override
     public CleanMode convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         if (response instanceof PortalIotCommandJsonResponse) {
-            CleanReport resp = ((PortalIotCommandJsonResponse) response).getResponsePayloadAs(gson,
-                    CleanReport.class);
+            CleanReport resp = ((PortalIotCommandJsonResponse) response).getResponsePayloadAs(gson, CleanReport.class);
             return resp.determineCleanMode(gson);
         } else {
             String payload = ((PortalIotCommandXmlResponse) response).getResponsePayloadXml();
