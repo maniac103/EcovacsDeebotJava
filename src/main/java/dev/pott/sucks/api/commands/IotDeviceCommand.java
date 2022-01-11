@@ -58,8 +58,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
         return writer.getBuffer().toString().replaceAll("\n|\r", "");
     }
 
-    public final String getJsonPayload(Gson gson) {
-        // JSON
+    public final Object getJsonPayload(Gson gson) {
         Map<String, Object> data = new HashMap<String, Object>();
         Object args = getJsonPayloadArgs();
         data.put("header", new JsonPayloadHeader());
@@ -68,7 +67,7 @@ public abstract class IotDeviceCommand<RESPONSETYPE> {
             body.put("data", args);
             data.put("body", body);
         }
-        return gson.toJson(data).toString();
+        return data;
     }
 
     protected Object getJsonPayloadArgs() {

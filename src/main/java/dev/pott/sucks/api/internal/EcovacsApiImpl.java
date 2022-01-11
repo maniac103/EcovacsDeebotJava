@@ -211,7 +211,7 @@ public final class EcovacsApiImpl implements EcovacsApi {
     public <T> T sendIotCommand(Device device, DeviceDescription desc, IotDeviceCommand<T> command)
             throws EcovacsApiException {
         boolean useJson = desc.usesJsonApi && !command.forceXmlFormat();
-        final String payload;
+        final Object payload;
         try {
             payload = useJson ? command.getJsonPayload(gson) : command.getXmlPayload();
         } catch (Exception e) {

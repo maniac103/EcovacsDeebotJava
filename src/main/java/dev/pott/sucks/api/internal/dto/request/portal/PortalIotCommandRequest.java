@@ -11,7 +11,7 @@ public class PortalIotCommandRequest {
     final String commandName;
 
     @SerializedName("payload")
-    final String payload;
+    final Object payload;
 
     @SerializedName("payloadType")
     final String payloadType;
@@ -28,7 +28,7 @@ public class PortalIotCommandRequest {
     @SerializedName("toType")
     final String targetClass;
 
-    public PortalIotCommandRequest(PortalAuthRequestParameter auth, String commandName, String payload,
+    public PortalIotCommandRequest(PortalAuthRequestParameter auth, String commandName, Object payload,
             String targetDeviceId, String targetResource, String targetClass, boolean json) {
         this.auth = auth;
         this.commandName = commandName;
