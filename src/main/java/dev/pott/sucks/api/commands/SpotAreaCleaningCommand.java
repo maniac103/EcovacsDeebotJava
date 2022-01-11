@@ -1,6 +1,7 @@
 package dev.pott.sucks.api.commands;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -10,36 +11,34 @@ import org.w3c.dom.Element;
 
 import dev.pott.sucks.api.dto.response.portal.AbstractPortalIotCommandResponse;
 
-public abstract class AbstractCleaningCommand extends IotDeviceCommand<Void> {
-    private final String xmlAction;
-    private final String jsonAction;
-    private final String mode;
+public class SpotAreaCleaningCommand extends IotDeviceCommand<Void> {
+    private final String content;
+    private final int cleanPasses;
 
-    protected AbstractCleaningCommand(String xmlAction, String jsonAction, String mode) {
+    public SpotAreaCleaningCommand(String roomIds, int cleanPasses) {
         super("Clean", "clean");
-        this.xmlAction = xmlAction;
-        this.jsonAction = jsonAction;
-        this.mode = mode;
+        this.content = roomIds;
+        this.cleanPasses = cleanPasses;
     }
 
     @Override
     protected void applyXmlPayload(Document doc, Element ctl) {
         Element clean = doc.createElement("clean");
-        if (mode != null) {
-            clean.setAttribute("type", mode);
-        }
+        clean.setAttribute("act", "s");
+        clean.setAttribute("type", "SpotArea");
         clean.setAttribute("speed", "standard");
-        clean.setAttribute("act", xmlAction);
+        clean.setAttribute("mid", content);
+        clean.setAttribute("deep", String.valueOf(cleanPasses));
         ctl.appendChild(clean);
     }
 
     @Override
     protected Object getJsonPayloadArgs() {
-        Map<String, String> args = new HashMap<>();
-        args.put("act", jsonAction);
-        if (mode != null) {
-            args.put("type", mode);
-        }
+        Map<String, Object> args = new HashMap<>();
+        args.put("act", "start");
+        args.put("content", content);
+        args.put("count", cleanPasses);
+        args.put("type", "spotArea");
         return args;
     }
 
