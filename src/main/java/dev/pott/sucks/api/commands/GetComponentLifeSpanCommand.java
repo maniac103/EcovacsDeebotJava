@@ -10,9 +10,9 @@ import org.w3c.dom.Node;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
+import dev.pott.sucks.api.internal.dto.response.deviceapi.ComponentLifeSpanReport;
 import dev.pott.sucks.api.internal.dto.response.portal.AbstractPortalIotCommandResponse;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandXmlResponse;
@@ -42,9 +42,9 @@ public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
     public Integer convertResponse(AbstractPortalIotCommandResponse response, Gson gson) throws Exception {
         if (response instanceof PortalIotCommandJsonResponse) {
             JsonElement respPayloadRaw = ((PortalIotCommandJsonResponse) response).getResponsePayload(gson);
-            Type type = new TypeToken<List<JsonResponse>>() {
+            Type type = new TypeToken<List<ComponentLifeSpanReport>>() {
             }.getType();
-            List<JsonResponse> resp = gson.fromJson(respPayloadRaw, type);
+            List<ComponentLifeSpanReport> resp = gson.fromJson(respPayloadRaw, type);
             if (resp == null || resp.isEmpty()) {
                 throw new IllegalArgumentException("Invalid lifespan response " + respPayloadRaw);
             }
@@ -70,16 +70,5 @@ public class GetComponentLifeSpanCommand extends IotDeviceCommand<Integer> {
     private int nodeValueToInt(String payload, String attrName) throws Exception {
         Node attr = getFirstXPathMatch(payload, "//ctl/@" + attrName);
         return attr != null ? Integer.valueOf(attr.getNodeValue()) : -1;
-    }
-
-    private static class JsonResponse {
-        @SerializedName("type")
-        public String brush;
-
-        @SerializedName("left")
-        public int left;
-
-        @SerializedName("total")
-        public int total;
     }
 }

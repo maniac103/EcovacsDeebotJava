@@ -30,6 +30,11 @@ import dev.pott.sucks.api.commands.GetFirmwareVersionCommand;
 import dev.pott.sucks.api.commands.GetMoppingWaterAmountCommand;
 import dev.pott.sucks.api.commands.GetWaterSystemPresentCommand;
 import dev.pott.sucks.api.commands.IotDeviceCommand;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.BatteryReport;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.ChargeReport;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.CleanReport;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.StatsReport;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.WaterInfoReport;
 import dev.pott.sucks.api.internal.dto.response.portal.Device;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse.JsonResponsePayloadWrapper;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalLoginResponse;
@@ -284,17 +289,7 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                 }
                 case "cleaninfo": {
                     CleanReport report = payloadAs(response, CleanReport.class);
-                    final String modeValue;
-                    if (report.cleanState != null) {
-                        if ("working".equals(report.cleanState.motionState)) {
-                            modeValue = report.cleanState.type;
-                        } else {
-                            modeValue = report.cleanState.motionState;
-                        }
-                    } else {
-                        modeValue = report.state;
-                    }
-                    handleCleanModeUpdate(gson.fromJson(modeValue, CleanMode.class));
+                    handleCleanModeUpdate(report.determineCleanMode(gson));
                     break;
                 }
                 case "evt": {
@@ -302,7 +297,7 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                     break;
                 }
                 case "lifespan": {
-                    // LifeSpanReport report = payloadAs(response, LifeSpanReport.class);
+                    // ComponentLifeSpanReport report = payloadAs(response, ComponentLifeSpanReport.class);
                     break;
                 }
                 case "speed": {
@@ -332,76 +327,5 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
             }
             return payload;
         }
-    }
-
-    private static class BatteryReport {
-        @SerializedName("value")
-        public int percent;
-        @SerializedName("isLow")
-        public int batteryIsLow;
-    }
-
-    private static class ChargeReport {
-        @SerializedName("isCharging")
-        public int isCharging;
-        @SerializedName("mode")
-        public String mode; // slot, ...?
-    }
-
-    private static class CleanReport {
-        @SerializedName("trigger")
-        public String trigger; // app, workComplete, ...?
-        @SerializedName("state")
-        public String state;
-        @SerializedName("cleanState")
-        public CleanStateReport cleanState;
-    }
-
-    private static class CleanStateReport {
-        @SerializedName("router")
-        public String router; // plan, ...?
-        @SerializedName("type")
-        public String type;
-        @SerializedName("motionState")
-        public String motionState;
-    }
-
-    private static class EventReport {
-        @SerializedName("code")
-        public int eventCode;
-    }
-
-    private static class LifeSpanReport {
-
-    }
-
-    private static class SleepReport {
-        @SerializedName("enable")
-        public int sleeping;
-    }
-
-    private static class SpeedReport {
-        @SerializedName("speed")
-        public int speedLevel;
-    }
-
-    private static class StatsReport {
-        @SerializedName("area")
-        public int area;
-        @SerializedName("time")
-        public int timeInSeconds;
-        @SerializedName("cid")
-        public String cid; // run ID
-        @SerializedName("start")
-        public long startTimestamp;
-        @SerializedName("type")
-        public String type; // auto, ... ?
-    }
-
-    private static class WaterInfoReport {
-        @SerializedName("enable")
-        public int waterPlatePresent;
-        @SerializedName("amount")
-        public int waterAmount;
     }
 }
