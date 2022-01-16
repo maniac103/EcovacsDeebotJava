@@ -6,6 +6,7 @@ import dev.pott.sucks.api.commands.IotDeviceCommand;
 import dev.pott.sucks.api.commands.MultiCommand;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.DeviceCapability;
+import dev.pott.sucks.cleaner.ErrorDescription;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
 
@@ -23,6 +24,8 @@ public interface EcovacsDevice {
         void onCleaningStatsChanged(EcovacsDevice device, int cleanedArea, int cleaningTimeSeconds);
 
         void onWaterSystemChanged(EcovacsDevice device, boolean present, MoppingWaterAmount amount);
+
+        void onErrorReported(EcovacsDevice device, ErrorDescription error);
 
         void onDeviceConnectionFailed(EcovacsDevice device, Throwable error);
     }

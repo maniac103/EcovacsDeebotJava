@@ -22,4 +22,24 @@ public enum SuctionPower {
                 return NORMAL;
         }
     }
+
+    public int toJsonValue() {
+        switch (this) {
+            case HIGH:
+                return 1;
+            case HIGHER:
+                return 2;
+            case SILENT:
+                return 1000;
+            default: // NORMAL
+                return 0;
+        }
+    }
+
+    public String toXmlValue() {
+        if (this == HIGH) {
+            return "strong";
+        }
+        return "standard";
+    }
 }

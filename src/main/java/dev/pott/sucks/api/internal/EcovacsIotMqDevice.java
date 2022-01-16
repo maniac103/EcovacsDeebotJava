@@ -33,6 +33,7 @@ import dev.pott.sucks.api.commands.MultiCommand;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.BatteryReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.ChargeReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.CleanReport;
+import dev.pott.sucks.api.internal.dto.response.deviceapi.ErrorReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.StatsReport;
 import dev.pott.sucks.api.internal.dto.response.deviceapi.WaterInfoReport;
 import dev.pott.sucks.api.internal.dto.response.portal.Device;
@@ -41,6 +42,7 @@ import dev.pott.sucks.api.internal.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.cleaner.ChargeMode;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.DeviceCapability;
+import dev.pott.sucks.cleaner.ErrorDescription;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import io.netty.handler.ssl.util.SimpleTrustManagerFactory;
 
@@ -254,6 +256,12 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         }
     }
 
+    private void handleErrorReport(int errorCode) {
+        if (listener != null) {
+            listener.onErrorReported(this, new ErrorDescription(errorCode));
+        }
+    }
+
     private interface MessageHandler {
         void handleMessage(String topic, String payload);
     }
@@ -300,6 +308,12 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
                     CleanReport report = payloadAs(response, CleanReport.class);
                     handleCleanModeUpdate(report.determineCleanMode(gson));
                     break;
+                }
+                case "error": {
+                    ErrorReport report = payloadAs(response, ErrorReport.class);
+                    if (!report.errorCodes.isEmpty()) {
+                        handleErrorReport(report.errorCodes.get(0));
+                    }
                 }
                 case "evt": {
                     // EventReport report = payloadAs(reponse, EventReport.class);
