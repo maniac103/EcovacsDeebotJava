@@ -17,6 +17,7 @@ public final class EcovacsApiUrlFactory {
     private static final String PORTAL_USERS_PATH = "/users/user.do";
     private static final String PORTAL_IOT_PRODUCT_PATH = "/pim/product/getProductIotMap";
     private static final String PORTAL_IOT_DEVMANAGER_PATH = "/iot/devmanager.do";
+    private static final String PORTAL_LOG_PATH = "/lg/log.do";
 
     private static final String AUTH_URL_FORMAT = "https://gl-{country}-openapi.ecovacs.com/v1/global/auth/getAuthCode";
 
@@ -50,6 +51,10 @@ public final class EcovacsApiUrlFactory {
 
     public static String getPortalIotDeviceManagerUrl(String continent) {
         return getPortalUrl(continent) + PORTAL_IOT_DEVMANAGER_PATH;
+    }
+
+    public static String getPortalLogUrl(String continent) {
+        return getPortalUrl(continent) + PORTAL_LOG_PATH;
     }
 
     private static String getPortalUrl(String continent) {

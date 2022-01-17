@@ -1,9 +1,12 @@
 package dev.pott.sucks.api;
 
+import java.util.List;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 import dev.pott.sucks.api.commands.IotDeviceCommand;
 import dev.pott.sucks.api.commands.MultiCommand;
+import dev.pott.sucks.cleaner.CleanLogRecord;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.DeviceCapability;
 import dev.pott.sucks.cleaner.ErrorDescription;
@@ -47,4 +50,6 @@ public interface EcovacsDevice {
     public <T> T sendCommand(IotDeviceCommand<T> command) throws EcovacsApiException;
 
     public <T> T sendCommand(MultiCommand<T> command) throws EcovacsApiException;
+
+    public List<CleanLogRecord> getCleanLogs(int maxCount) throws EcovacsApiException;
 }

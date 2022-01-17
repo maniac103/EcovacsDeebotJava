@@ -2,6 +2,8 @@ package dev.pott.sucks.api.internal;
 
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.ManagerFactoryParameters;
 import javax.net.ssl.TrustManager;
@@ -40,6 +42,7 @@ import dev.pott.sucks.api.internal.dto.response.portal.Device;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalIotCommandJsonResponse.JsonResponsePayloadWrapper;
 import dev.pott.sucks.api.internal.dto.response.portal.PortalLoginResponse;
 import dev.pott.sucks.cleaner.ChargeMode;
+import dev.pott.sucks.cleaner.CleanLogRecord;
 import dev.pott.sucks.cleaner.CleanMode;
 import dev.pott.sucks.cleaner.DeviceCapability;
 import dev.pott.sucks.cleaner.ErrorDescription;
@@ -72,6 +75,7 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
         this.api = api;
         this.gson = gson;
         this.messageHandler = desc.usesJsonApi ? new JsonMessageHandler() : new XmlMessageHandler();
+        api.fetchCleanLogs(device);
     }
 
     @Override
@@ -111,6 +115,22 @@ public class EcovacsIotMqDevice implements EcovacsDevice {
             next = command.processResultAndGetNextCommand(api.sendIotCommand(device, desc, next));
         }
         return command.getResult();
+    }
+
+    @Override
+    public List<CleanLogRecord> getCleanLogs(int maxCount) throws EcovacsApiException {
+        return api.fetchCleanLogs(device).stream().sorted((lhs, rhs) -> Long.compare(rhs.timestamp, lhs.timestamp))
+                .limit(maxCount).map(record -> {
+                    byte[] mapImage = null;
+                    if (record.imageUrl != null) {
+                        try {
+                            mapImage = api.fetchDataFromurl(record.imageUrl);
+                        } catch (EcovacsApiException e) {
+                            logger.debug("Could not fetch clean log map for device " + getSerialNumber(), e);
+                        }
+                    }
+                    return new CleanLogRecord(record.timestamp, record.duration, record.area, mapImage, record.type);
+                }).collect(Collectors.toList());
     }
 
     @Override
