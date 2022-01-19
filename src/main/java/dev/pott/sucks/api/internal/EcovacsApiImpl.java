@@ -248,6 +248,26 @@ public final class EcovacsApiImpl implements EcovacsApi {
         }
     }
 
+    public List<PortalCleanLogsResponse.LogRecord> fetchCleanLogs(Device device) throws EcovacsApiException {
+        PortalCleanLogsRequest data = new PortalCleanLogsRequest(createAuthData(), device.getDid(),
+                device.getResource());
+        String json = gson.toJson(data);
+        String url = EcovacsApiUrlFactory.getPortalLogUrl(configuration.getContinent());
+        Request request = httpClient.newRequest(url).method(HttpMethod.POST)
+                .header(HttpHeader.CONTENT_TYPE, "application/json").content(new StringContentProvider(json));
+        ContentResponse response = executeRequest(request);
+        PortalCleanLogsResponse responseObj = handleResponse(response, PortalCleanLogsResponse.class);
+        if (!responseObj.wasSuccessful()) {
+            throw new EcovacsApiException("Fetching clean logs failed");
+        }
+        return responseObj.records;
+    }
+
+    public byte[] fetchDataFromurl(String url) throws EcovacsApiException {
+        Request request = httpClient.newRequest(url);
+        return executeRequest(request).getContent();
+    }
+
     private PortalAuthRequestParameter createAuthData() {
         PortalLoginResponse loginData = this.loginData;
         if (loginData == null) {

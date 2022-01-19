@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import dev.pott.sucks.api.*;
 import dev.pott.sucks.api.util.MD5Util;
 import dev.pott.sucks.cleaner.CleanMode;
+import dev.pott.sucks.cleaner.ErrorDescription;
 import dev.pott.sucks.cleaner.MoppingWaterAmount;
 import dev.pott.sucks.cleaner.SuctionPower;
 
@@ -60,6 +61,12 @@ public class Main {
             public void onWaterSystemChanged(EcovacsDevice device, boolean present, MoppingWaterAmount amount) {
                 logger.info("{}: Water system now {}, amount {}", device.getSerialNumber(),
                         present ? "present" : "missing", amount);
+            }
+
+            @Override
+            public void onErrorReported(EcovacsDevice device, ErrorDescription error) {
+                logger.info("{}: Error reported, code = {}, desc = {}", device.getSerialNumber(), error.errorCode,
+                        error.description);
             }
 
             @Override
