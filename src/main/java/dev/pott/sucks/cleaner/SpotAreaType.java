@@ -22,8 +22,8 @@ public enum SpotAreaType {
         this.type = type;
     }
 
-    public SpotAreaType fromApiResponse(String response) {
-        int id = Integer.valueOf(response);
+    public SpotAreaType fromApiResponse(String response) throws NumberFormatException {
+        int id = Integer.parseInt(response);
         for (SpotAreaType t : values()) {
             if (t.type == id) {
                 return t;
