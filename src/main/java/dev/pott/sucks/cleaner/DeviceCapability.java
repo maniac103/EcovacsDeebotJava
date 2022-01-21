@@ -11,6 +11,12 @@ public enum DeviceCapability {
     VOICE_REPORTING,
     @SerializedName("spot_area_cleaning")
     SPOT_AREA_CLEANING,
+    @SerializedName("custom_area_cleaning")
+    CUSTOM_AREA_CLEANING,
     @SerializedName("clean_speed_control")
-    CLEAN_SPEED_CONTROL
+    CLEAN_SPEED_CONTROL,
+    @SerializedName("mapping")
+    MAPPING,
+    @SerializedName("auto_empty_station")
+    AUTO_EMPTY_STATION
 }
